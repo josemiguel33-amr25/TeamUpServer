@@ -1,0 +1,33 @@
+# =========================
+# JAVA / MAVEN
+# =========================
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# SISTEMA
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# ESTAS CARPETAS TIENEN ACTIVIDADES Y EJEMPLOS DEL CURSO QUE LAS SIGO PARA HACER COSAS QUE NO RECORDABA :):()
+# =========================
+src/Apuntes/
+src/cosasDeSrc/
+src/ejemplosScript/
+src/main/java/ejemplos/
+src/main/java/EjemplosServer/

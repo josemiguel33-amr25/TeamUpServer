@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.bytecode.use_reflection_optimizer">false</property>
+
+        <!-- MySql -->
+<!--
+        <property name="hibernate.dialect"> org.hibernate.dialect.MySQLDialect </property> 
+
+        <property name="hibernate.connection.driver_class"> com.mysql.jdbc.Driver </property> 
+-->      
+
+        <property name="hibernate.connection.url"> jdbc:mysql://localhost:3306/colegio?zeroDateTimeBehavior=convertToNull </property>
+        <property name="hibernate.connection.username"> root </property> 
+        <property name="hibernate.connection.password"> fernandoalonso </property>
+
+        <!-- Configuración de algunos parámetros de Hibernate-->
+        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.query.factory_class">org.hibernate.hql.internal.classic.ClassicQueryTranslatorFactory</property>
+
+
+<!--Oracle
+        <property name="hibernate.connection.driver_class">oracle.jdbc.driver.OracleDriver</property>
+        <property name="hibernate.connection.password">UNIDAD3</property>
+        <property name="hibernate.connection.url">jdbc:oracle:thin:@localhost:1521:xe</property>
+        <property name="hibernate.connection.username">UNIDAD3</property>
+        <property name="hibernate.default_schema">UNIDAD3</property>
+        <property name="hibernate.dialect">org.hibernate.dialect.OracleDialect</property>
+        <property name="hibernate.hbm2ddl.auto">none</property>
+        <property name="hibernate.search.autoregister_listeners">true</property>
+        <property name="hibernate.validator.apply_to_ddl">false</property>
+  -->     
+
+<!-- LO QUE ESTABA ANTES
+        Clases con anotaciones 
+        <mapping class="clases.Nombres"/>
+        <mapping class="clases.Departamentos"/>
+        <mapping class="clases.Empleados"/>
+ -->
+
+<!-- -->
+        <mapping class="ejercicio.Alumno"/>
+        <mapping class="ejercicio.Modulo"/>
+        <mapping class="ejercicio.Trabajos"/>
+
+    </session-factory>
+</hibernate-configuration>
