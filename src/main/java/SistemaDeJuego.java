@@ -28,7 +28,7 @@ public class SistemaDeJuego {
                     // en el indice 3 estan los datos del usuario, solo tenemos que extrearlos y ir haciendo metodos lo escribo por si no me da tiempo hacerlo hoy para que te acuerdes
                     registrarUsuario(datos);
             case "iniciarSesion":
-
+            
         }
     }
 
@@ -40,6 +40,8 @@ public class SistemaDeJuego {
             mapaDatos.put(datoParticionado[0], datoParticionado[1]);
         }
 
+        sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"));
+        
         //Por hacer aqui Creacion del usuario y añadirlo a base de datos, si marca la opcion recuerdame que genere el token a la base de datos y comprobar que funcione
         // tambien tienes que pensar el sistema de verificacion 
         // hacer lo de validar el correo

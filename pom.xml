@@ -37,6 +37,14 @@
 			<artifactId>hibernate-core</artifactId>
 			<version>6.6.6.Final</version>
 		</dependency>
+
+
+		<!-- BCRYPT DEPENDENCIA-->
+		<dependency>
+			<groupId>org.mindrot</groupId>
+			<artifactId>jbcrypt</artifactId>
+			<version>0.4</version>
+		</dependency>
 	</dependencies>
 
 	

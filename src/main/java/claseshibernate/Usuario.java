@@ -41,5 +41,19 @@ public class Usuario {
     @OneToMany(mappedBy="usuario")
     private Set<RememberToken> tokens;
 
-    public Usuario() {}
+    public Usuario() {
+
+    }
+
+    public Usuario(String nombre, String correo, String contrasenia, String posicion1, String posicion2) {
+        this.nombre = nombre;
+        this.correo = correo;
+        this.contrasena = contrasenia;
+        this.posicion1 = posicion1;
+        this.posicion2 = posicion2;
+        this.reputacion = 0;
+        this.verificado = false;
+        this.puntos = 0;
+        this.rango = 1;
+    }
 }
