@@ -29,5 +29,7 @@ public class Participacion {
     @JoinColumn(name="partido_id")
     private Partido partido;
 
-    public Participacion() {}
+    public Participacion() {
+        
+    }
 }

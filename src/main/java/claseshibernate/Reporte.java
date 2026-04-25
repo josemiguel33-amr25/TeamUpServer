@@ -34,5 +34,7 @@ public class Reporte {
     @JoinColumn(name="partido_id")
     private Partido partido;
 
-    public Reporte() {}
+    public Reporte() {
+        
+    }
 }

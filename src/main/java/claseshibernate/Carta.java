@@ -22,11 +22,16 @@ public class Carta {
     private int regate;
     private int defensa;
     private int fisico;
-    private int nivel;
 
     @ManyToOne
     @JoinColumn(name="usuario_id")
     private Usuario usuario;
 
-    public Carta() {}
+    @ManyToOne
+    @JoinColumn(name="cosmetico_id")
+    private Cosmetico cosmetico;
+
+    public Carta() {
+        
+    }
 }

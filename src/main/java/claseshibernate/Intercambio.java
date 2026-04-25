@@ -35,5 +35,7 @@ public class Intercambio {
     @OneToMany(mappedBy="intercambio")
     private Set<IntercambioItem> items;
 
-    public Intercambio() {}
+    public Intercambio() {
+        
+    }
 }

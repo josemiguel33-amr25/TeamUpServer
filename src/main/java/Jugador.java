@@ -18,6 +18,7 @@ public class Jugador implements  Runnable {
     public Jugador(Socket zocalo, SistemaDeJuego sdj) {
         this.zocalo = zocalo;
         this.sdj = sdj;
+        abrirFlujos();
     }
 
     private void abrirFlujos() {
@@ -31,6 +32,34 @@ public class Jugador implements  Runnable {
 
     @Override
     public void run() {
-        
+       String linea = "";
+        try {
+            while ((linea = lector.readLine()) != null) {
+                String feedback = this.sdj.buzon(linea, this);
+                
+            }
+        } catch (IOException em) {
+            System.out.println("ERROR FATIDICO |14|");
+        } finally {
+            System.out.println("TeamUp|MensajeInterno|Usuario Desconectado|UsuarioId:" + this.idUsuario);
+            cerrarConexion();
+        }
+    }
+
+    private void cerrarConexion() {
+        try {
+            if (zocalo != null) zocalo.close();
+            System.out.println("Socket de jugador cerrado");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public int getIdUsuario() {
+        return idUsuario;
+    }
+
+    public Socket getZocalo() {
+        return zocalo;
     }
 }

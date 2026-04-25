@@ -34,5 +34,7 @@ public class Partido {
     @OneToMany(mappedBy="partido")
     private Set<Participacion> participaciones;
 
-    public Partido() {}
+    public Partido() {
+        
+    }
 }

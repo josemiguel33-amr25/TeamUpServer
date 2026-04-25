@@ -31,5 +31,16 @@ public class RememberToken {
     @JoinColumn(name="usuario_id")
     private Usuario usuario;
 
-    public RememberToken() {}
+    public RememberToken() {
+        
+    }
+
+    public RememberToken(String selector, String tokenHash, String dispositivo, String ip) {
+        this.selector = selector;
+        this.tokenHash = tokenHash;
+        this.dispositivo = dispositivo;
+        this.fechaCreacion = LocalDateTime.now();
+        this.fechaExpiracion = fechaCreacion.plusMonths(1);
+        this.ip = ip;
+    }
 }

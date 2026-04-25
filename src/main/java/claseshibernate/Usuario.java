@@ -51,9 +51,34 @@ public class Usuario {
         this.contrasena = contrasenia;
         this.posicion1 = posicion1;
         this.posicion2 = posicion2;
-        this.reputacion = 0;
-        this.verificado = false;
+        this.fechaCreacion = LocalDateTime.now();
+        this.reputacion = 0; // para el momento de programar la funcion de que los usuarios al terminar un partido den puntos a los otros usuarios dependiendo de la reputacion del usuario damos mas puntos como no hay limitacion de reputacion ya que esto es para la linea de progresion, podemos hacer de escala esto lo tendras que mirar cuando veamos cuantos puntos se dan por reputacion
+        this.verificado = false; //para simplificar el sistema de verificacio por ahora, vamos a hacer que la cuenta tenga 14 dias de antiguiedad y que haya participado minimo en un partido
         this.puntos = 0;
         this.rango = 1;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getContrasena() {
+        return contrasena;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getPosicion1() {
+        return posicion1;
+    }
+
+    public String getPosicion2() {
+        return posicion2;
     }
 }

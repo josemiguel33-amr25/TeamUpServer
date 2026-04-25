@@ -28,5 +28,7 @@ public class IntercambioItem {
     @JoinColumn(name="usuario_id")
     private Usuario usuario;
 
-    public IntercambioItem() {}
+    public IntercambioItem() {
+        
+    }
 }

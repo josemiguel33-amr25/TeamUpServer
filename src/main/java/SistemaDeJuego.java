@@ -18,38 +18,48 @@ public class SistemaDeJuego {
         this.sv = sv;
     }
 
-    public void buzon(String mensaje) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
-        String [] mensajePartido = mensaje.split(";");
-        String [] datosDivididos = mensajePartido[2].split("\\|");
-        String datos = datosDivididos[1];
-        String opcion = datosDivididos[0];
+    public String buzon(String mensaje, Jugador j) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
+        String respuesta = "TeamUp|Directriz|"; 
+        String [] mensajePartido = mensaje.split(";");  // TeamUpCliente;Respuesta|registro|nombreºvalor:contraseniaºvalor:
+        String [] datosDivididos = mensajePartido[1].split("\\|");
+        String datos = datosDivididos[2];
+        String opcion = datosDivididos[1];
         switch (opcion) { 
             case "registro":
                     // en el indice 3 estan los datos del usuario, solo tenemos que extrearlos y ir haciendo metodos lo escribo por si no me da tiempo hacerlo hoy para que te acuerdes
-                    registrarUsuario(datos);
-            case "iniciarSesion":
+                    respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
+                    jugadores.add(j);
+            case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
             
         }
+
+        return respuesta;
     }
 
-    public void registrarUsuario(String datos) { //datos formato es ---> |registroºvalor:contraseniaºvalor:
+    public String registrarUsuario(String datos, Jugador j) { //datos formato es ---> |registroºvalor:contraseniaºvalor: el recordarmeºvalor (0 Falso o 1 true) va al final
+        String respuesta = "TeamUp|Directriz|Registro de usuario fallido";
         Map<String, String> mapaDatos = new HashMap<>();
-        String [] divisionDatos = datos.split(":");
+        String [] divisionDatos = datos.split(":"); //nombreºvalor:contraseniaºvalor:recordarmeº0/1:
         for (String dato : divisionDatos) {
             String [] datoParticionado = dato.split("º");
             mapaDatos.put(datoParticionado[0], datoParticionado[1]);
         }
 
-        sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"));
-        
-        //Por hacer aqui Creacion del usuario y añadirlo a base de datos, si marca la opcion recuerdame que genere el token a la base de datos y comprobar que funcione
-        // tambien tienes que pensar el sistema de verificacion 
-        // hacer lo de validar el correo
+        respuesta = sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"),mapaDatos.get("recordarme"), j);
+
+        // tambien tienes que pensar el sistema de verificacion  --->> para simplificar el sistema de verificacio por ahora, vamos a hacer que la cuenta tenga 14 dias de antiguiedad y que haya participado minimo en un partido
         // y la estadisticas teniendo en cuenta las dos posiciones que haya elegido
+        // llamar a la funcion de del baseDatosManager generar carta debajo de respuesta
+
+        return respuesta;
 
     }
 
-    public void iniciarSesion() {
+    private void generadorCarta(String posicion1, String posicion2, String nombre) {
+        
+    }
+
+    public void iniciarSesion() { //correoºvalor:contraseniaºvalor:selectorºdato:tokenªdato
 
     }
 

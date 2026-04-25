@@ -18,5 +18,7 @@ public class Cosmetico {
     private String tipo;
     private String rareza;
 
-    public Cosmetico() {}
+    public Cosmetico() {
+        
+    }
 }

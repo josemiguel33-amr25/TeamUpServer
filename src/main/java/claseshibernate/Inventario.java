@@ -20,5 +20,7 @@ public class Inventario {
     @JoinColumn(name="usuario_id")
     private Usuario usuario;
 
-    public Inventario() {}
+    public Inventario() {
+        
+    }
 }
