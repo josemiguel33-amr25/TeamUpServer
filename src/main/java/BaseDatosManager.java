@@ -3,6 +3,7 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -15,6 +16,8 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.mindrot.jbcrypt.BCrypt;
 
+import claseshibernate.Carta;
+import claseshibernate.Cosmetico;
 import claseshibernate.RememberToken;
 import claseshibernate.Usuario;
 
@@ -60,67 +63,156 @@ public class BaseDatosManager {
         return usuarioExiste;
     }
 
+    
+
     private boolean comprobarCorreoAsociado(String correo) {
         boolean correoAsociado = false;
-        Session session = sessionFactory.openSession();	
-        Query<Usuario> q = session.createQuery("from Usuario where correo = :correo", Usuario.class);
+        
+        try (Session session = sessionFactory.openSession()) {
+            Query<Usuario> q = session.createQuery("from Usuario where correo = :correo", Usuario.class);
 
-        q.setParameter("correo", correo);
-        List<Usuario> lista = q.list();
-        if (!lista.isEmpty()) {
-            correoAsociado  = true;
+            q.setParameter("correo", correo);
+            List<Usuario> lista = q.list();
+            if (!lista.isEmpty()) {
+                correoAsociado  = true;
+            }
         }
+
 
         return correoAsociado;
     }
 
+    public void verificadorCuentas() {
+        int contadorUsuariosVerificados = 0;
+        try (Session session = sessionFactory.openSession()) {
+            List<Usuario> usuarios = session.createQuery("FROM Usuario u WHERE u.verificado = false", Usuario.class).list();
+            for (Usuario uSel: usuarios) {
+                if (uSel.getFechaCreacion().plusDays(14).isBefore(LocalDateTime.now())) {
+                    uSel.setVerificado(true);
+                    contadorUsuariosVerificados = contadorUsuariosVerificados + 1;
+                    Transaction transaction = session.beginTransaction();
+                    session.persist(uSel);
+
+                    try {
+                        transaction.commit();
+                        System.out.println("TeamUp|MensajeInterno|Usuario dado de alta");
+                    } catch (IllegalStateException em) {
+                        System.out.println("TeamUp|Error|EM2|");
+                    }
+                }
+            }
+
+        }
+        System.out.println("TeamUp|MensajeInterno| Usuarios verificados ---> " + contadorUsuariosVerificados);
+    }
+
+    public int obtenerId(String nombre) {
+        return obtenerUsuario(nombre).getId();
+    }
+
+    public void verificadorExpiracionToken() {
+        int contadorTokenExpirados = 0;
+        try (Session session = sessionFactory.openSession()){
+            List<RememberToken> tokens = session.createQuery("FROM RememberToken", RememberToken.class).list();
+            for (RememberToken t : tokens) {
+                if (!LocalDateTime.now().isBefore(t.getFechaExpiracion())) {
+                    contadorTokenExpirados++;
+
+                    Transaction transaction = session.beginTransaction();
+                    session.remove(t);
+
+                    try {
+                        transaction.commit();
+                        System.out.println("TeamUp|MensajeInterno|Token Eliminado.");
+                    } catch (IllegalStateException em) {
+                        System.out.println("TeamUp|Error|EM2|.");
+                    }
+                }
+            }
+        }
+        System.out.println("TeamUp|MensajeInterno|Tokens eliminados por caducados -----> " + contadorTokenExpirados);
+    }
+
     
-
-    public String iniciarSesion() { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
-
+    //devuelve string pero pongo void para que no salga en rojo
+    public  void iniciarSesion() { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
+        // si no tiene remember token usamos la funcion que tenemos para comprobar contraseña, si tiene remember token creo que tenemos funcion para comprobar rmemeber token
     }
     
-    
+    public void registrarCarta(Carta c) {
+        try (Session session = sessionFactory.openSession()){
+                Transaction transaction = session.beginTransaction();
+                session.persist(c);
+                try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|Carta Creada.");
+                } catch (IllegalStateException em) {
+                    System.out.println("TeamUp|Error|EM2|.");
+                }
+
+        }
+    }
 
     public String registrarUsuario(String nombre, String correo, String contrasenia, String posicion1, String posicion2, String recordarme, Jugador j) {
         String resultado = "";
-        Session session = sessionFactory.openSession();
         boolean usuarioExiste = comprobarUsuarioExiste(nombre);
         boolean correoExiste = comprobarCorreoAsociado(correo);
 
+
+        try (Session session = sessionFactory.openSession()) {
         // Esto lo podriamos llevar a una funcion que deolviera un objeto que estuviera fomrado por UN boolean false / true y el mensaje, la verdad seria bueno y ayudaria al codigo pero mas adelante
-        if (usuarioExiste) {
-            resultado = "TeamUp|Directriz|Registro Fallido|errU";
-        } else if (correoExiste){
-            resultado = "TeamUp|Directriz|Registro Fallido|errC";
-        } else if (!validarNombreUsuario(nombre)) {
-            resultado = "TeamUp|Directriz|Registro Fallido|errUu";
-        } else if (!validarCorreo(correo)) {
-            resultado = "TeamUp|Directriz|Registro Fallido|errCc";
-        } else if (!validarContrasenia(contrasenia)) {
-            resultado = "TeamUp|Directriz|Registro Fallido|errCo";
-        } else {
-            String contraseniaEncriptada  = encriptarContrasenia(contrasenia);
-            Usuario u = new Usuario(nombre, correo, contraseniaEncriptada, posicion1, posicion2);
-            
-            Transaction transaction = session.beginTransaction();
-			session.persist(u);
+            if (usuarioExiste) {
+                resultado = "TeamUp|Directriz|Registro Fallido|errU";
+            } else if (correoExiste){
+                resultado = "TeamUp|Directriz|Registro Fallido|errC";
+            } else if (!validarNombreUsuario(nombre)) {
+                resultado = "TeamUp|Directriz|Registro Fallido|errUu";
+            } else if (!validarCorreo(correo)) {
+                resultado = "TeamUp|Directriz|Registro Fallido|errCc";
+            } else if (!validarContrasenia(contrasenia)) {
+                resultado = "TeamUp|Directriz|Registro Fallido|errCo";
+            } else {
+                String contraseniaEncriptada  = encriptarContrasenia(contrasenia);
+                Usuario u = new Usuario(nombre, correo, contraseniaEncriptada, posicion1, posicion2);
+                
+                Transaction transaction = session.beginTransaction();
+                session.persist(u);
 
-			try {
-				transaction.commit();
-				System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
-			} catch (IllegalStateException em) {
-                System.out.println("TeamUp|Error|EM2|.");
-			}
+                try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
+                } catch (IllegalStateException em) {
+                    System.out.println("TeamUp|Error|EM2|.");
+                }
 
-            if (recordarme.equals("1")) {
-                generarRememberToken(u, j);
-                resultado = "TeamUp|Directriz|Registro Completo|";
+                if (recordarme.equals("1")) {
+                    List<String> lista = generarRememberToken(u, j);
+                    resultado = "TeamUp|Directriz|Registro Completo|rCºtoken:" + lista.get(0) + ":" + lista.get(1);
+                } else {
+                    resultado = "TeamUp|Directriz|Registro Completo|rC";
+                }
             }
         }
 
 
         return resultado;
+    }
+
+
+
+    public Cosmetico obtenerCosmetico(int id) {
+        Cosmetico c = null;
+
+        try (Session session = sessionFactory.openSession()){
+            Query<Cosmetico> q = session.createQuery("from Cosmetico where id = :id", Cosmetico.class);
+
+            q.setParameter("id", id);
+            List<Cosmetico> cosmeticos = q.list();
+            c = cosmeticos.get(0);
+        }
+
+
+        return c;
     }
 
     private String cadenaAleatoria() {
@@ -193,16 +285,17 @@ public class BaseDatosManager {
 
         RememberToken rm = new RememberToken(selector,hashearToken(token),dispositivo, ip);
 
-        Session session = sessionFactory.openSession();
-        Transaction transaction = session.beginTransaction();
-		session.persist(rm);
+        try (Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+            session.persist(rm);
 
-		try {
-			transaction.commit();
-			System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
-		} catch (IllegalStateException em) {
-            System.out.println("TeamUp|Error|EM2|");
-		}
+            try {
+                transaction.commit();
+                System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
+            } catch (IllegalStateException em) {
+                System.out.println("TeamUp|Error|EM2|");
+            }
+        }
 
         //remember token, slelector, token, fecha expi, dispositivo, ip
         return listaDatos;
@@ -274,14 +367,15 @@ public class BaseDatosManager {
 
     }
 
-    private Usuario obtenerUsuario(String nombreUsuario) {
+    public Usuario obtenerUsuario(String nombreUsuario) {
         Usuario u = null;
-        Session session = sessionFactory.openSession();	
-        Query<Usuario> q = session.createQuery("from Usuario where nombre = :nombre", Usuario.class);
+        try (Session session = sessionFactory.openSession()){
+            Query<Usuario> q = session.createQuery("from Usuario where nombre = :nombre", Usuario.class);
 
-        q.setParameter("nombre", nombreUsuario);
-        List<Usuario> lUsuario = q.list();
-        u = lUsuario.get(0);
+            q.setParameter("nombre", nombreUsuario);
+            List<Usuario> lUsuario = q.list();
+            u = lUsuario.get(0);
+        }
 
         return u;
     }

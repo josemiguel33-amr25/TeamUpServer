@@ -45,11 +45,22 @@ public class Servidor {
             while (true) {
                 System.out.println("TeamUp|MensajeInterno| Servidor Iniciado");
                 System.out.println("TeamUp|MensajeInterno| Iniciando Conexión Con Base De Datos");
+                
+                System.out.println("TeamUp|MensajeInterno| Iniciando comprobacion de verificacion de cuentas");
+                baseDatosManager.verificadorCuentas();
+
+                System.out.println("TeamUp|MensajeInterno| Iniciando comprobacion de token expirados");
+                baseDatosManager.verificadorExpiracionToken();
+
+                
+                System.out.println("\n\n\nTeamUp|MensajeInterno| Comprobaciones terminadas \n SERVIDOR INICIADO");
 
                 while (true) {
                     try {
                         Socket cliente  = zocaloServidor.accept();
                         Jugador j = new Jugador(cliente, sdj);
+                        Thread hilo = new Thread(j);
+                        hilo.start();
                     } catch (IOException em) {
                         System.out.println("TeamUp|Error|EM1|");
                     }

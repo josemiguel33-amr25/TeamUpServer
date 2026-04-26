@@ -2,6 +2,7 @@ package claseshibernate;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,9 +20,14 @@ public class RememberToken {
     private int id;
 
     private String selector;
+
+    @Column(name="token_hash")
     private String tokenHash;
 
+    @Column(name="fecha_expiracion")
     private LocalDateTime fechaExpiracion;
+    
+    @Column(name="fecha_creacion")
     private LocalDateTime fechaCreacion;
 
     private String dispositivo;
@@ -42,5 +48,9 @@ public class RememberToken {
         this.fechaCreacion = LocalDateTime.now();
         this.fechaExpiracion = fechaCreacion.plusMonths(1);
         this.ip = ip;
+    }
+
+    public LocalDateTime getFechaExpiracion() {
+        return fechaExpiracion;
     }
 }

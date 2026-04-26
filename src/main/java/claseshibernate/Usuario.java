@@ -81,4 +81,8 @@ public class Usuario {
     public String getPosicion2() {
         return posicion2;
     }
+
+    public void setVerificado(boolean verificado) {
+        this.verificado = verificado;
+    }
 }

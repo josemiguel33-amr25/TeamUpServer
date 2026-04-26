@@ -62,4 +62,8 @@ public class Jugador implements  Runnable {
     public Socket getZocalo() {
         return zocalo;
     }
+
+    public void setIdUsuario(int idUsuario) {
+        this.idUsuario = idUsuario;
+    }
 }
