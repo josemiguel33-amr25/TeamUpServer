@@ -135,9 +135,80 @@ public class BaseDatosManager {
 
     
     //devuelve string pero pongo void para que no salga en rojo
-    public  void iniciarSesion() { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
+    public String iniciarSesionContrasenia(String correo, String contrasenia) { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
         // si no tiene remember token usamos la funcion que tenemos para comprobar contraseña, si tiene remember token creo que tenemos funcion para comprobar rmemeber token
+        String respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIn";
+        boolean correoExiste = comprobarCorreoAsociado(correo);
+        if (!correoExiste) {
+            respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIncnoe";
+        } else if (!comprobarUsuario(correo, contrasenia))
+            respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIncin";
+        else
+            respuesta = "TeamUp|Directriz|Inicio Sesion Correcto|iC";
+        
+        
+        return respuesta;
     }
+
+    public String iniciarSesionToken(String selector, String token) { 
+        String respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|ertkNv";
+        boolean rememberTokenExiste = comprobarTokenExiste(selector);
+
+        if (!rememberTokenExiste) {
+            respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|ertkNe";
+        } else if (comprobarRememberToken(selector, token))
+            respuesta = "TeamUp|Directriz|Inicio Sesion Correcto|iCcTkC";
+        
+
+        return respuesta;
+    }
+
+    private boolean comprobarTokenExiste(String selector) {
+        boolean tokenExiste = false;
+        Session session = sessionFactory.openSession();	
+        Query<RememberToken> q = session.createQuery("from RememberToken where selector = :selector", RememberToken.class);
+
+        q.setParameter("selector", selector);
+        List<RememberToken> lista = q.list();
+        if (!lista.isEmpty()) {
+            tokenExiste  = true;
+        }
+
+        return tokenExiste;
+    }
+
+    private boolean comprobarRememberToken(String selector, String token) {
+        boolean rememberValido = false;
+        String hash = hashearToken(token);
+        RememberToken rm = obtenerRememberToken(selector);
+
+        if (rm.getTokenHash().equals(hash)) {
+            rememberValido = true;
+        }
+
+
+
+
+        return rememberValido;
+    }
+
+    private RememberToken obtenerRememberToken(String selector) {
+        RememberToken rm = null;
+
+
+        try (Session session = sessionFactory.openSession()){
+            Query<RememberToken> q = session.createQuery("from RememberToken where selector = :selector", RememberToken.class);
+
+            q.setParameter("selector", selector);
+            List<RememberToken> rememberTokens = q.list();
+            rm = rememberTokens.get(0);
+        }
+
+        return rm;
+
+
+    }
+
     
     public void registrarCarta(Carta c) {
         try (Session session = sessionFactory.openSession()){
@@ -347,7 +418,7 @@ public class BaseDatosManager {
         if (!especial.matcher(contrasenia).find()) 
             contraseniaValida = false;
 
-        return true;
+        return contraseniaValida;
     }
 
     private boolean validarNombreUsuario(String nombre) {
@@ -380,13 +451,26 @@ public class BaseDatosManager {
         return u;
     }
 
-    private boolean comprobarUsuario(String usuario, String contrasenia) {
-        boolean entrar = false;
-        if (comprobarUsuarioExiste(usuario)) {
-            Usuario u = obtenerUsuario(usuario);
-            BCrypt.checkpw(contrasenia, u.getContrasena());
-            entrar = true;
+    public Usuario obtenerUsuarioPorCorreo(String correo) {
+        Usuario u = null;
+        try (Session session = sessionFactory.openSession()){
+            Query<Usuario> q = session.createQuery("from Usuario where correo = :correo", Usuario.class);
+
+            q.setParameter("correo", correo);
+            List<Usuario> lUsuario = q.list();
+            u = lUsuario.get(0);
         }
+
+        return u;
+    }
+
+    private boolean comprobarUsuario(String correo, String contrasenia) {
+        boolean entrar = false;
+        Usuario u = obtenerUsuarioPorCorreo(correo);
+        if (BCrypt.checkpw(contrasenia, u.getContrasena())) 
+            entrar = true;
+
+        
         
         
         return entrar;

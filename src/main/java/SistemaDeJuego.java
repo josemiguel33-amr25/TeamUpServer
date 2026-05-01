@@ -37,16 +37,45 @@ public class SistemaDeJuego {
         switch (opcion) { 
             case "registro":
                     respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
-                    jugadores.add(j);
+                    break;
             case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
-            
-        }
+                    respuesta = iniciarSesion(datos, j); // TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:token:siºselector:valorºhash:valor
+                    break; 
+            }
 
         return respuesta;
     }
 
+    public String iniciarSesion(String datos, Jugador j) { //TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:remember:siºselector:valorºtoken:valor
+            String respuesta = "";
+            
+            Map<String, String> mapaDatos = new HashMap<>();
+            String [] divisionDatos = datos.split(":"); 
+            for (String dato : divisionDatos) {
+                String [] datoParticionado = dato.split("º");
+                mapaDatos.put(datoParticionado[0], datoParticionado[1]);
+            }
+            if (mapaDatos.get("remember").equals("si")) {
+                respuesta = sv.getBaseDatosManager().iniciarSesionToken(mapaDatos.get("selector"), mapaDatos.get("token"));
+            } else if (mapaDatos.get("remember").equals("no")) {
+                respuesta = sv.getBaseDatosManager().iniciarSesionContrasenia(mapaDatos.get("correo"), mapaDatos.get("contrasenia"));
+            }
+
+            String [] comprobacionRespuesta = respuesta.split("\\|");
+
+            if (comprobacionRespuesta[2].equals("rC")) {
+                j.setIdUsuario(sv.getBaseDatosManager().obtenerId(mapaDatos.get("nombre")));
+                generadorCarta(mapaDatos.get("posicion1"), mapaDatos.get("posicion2"), mapaDatos.get("nombre"));
+                jugadores.add(j);
+            } else 
+                j.setIdUsuario(-33);
+
+
+            return respuesta;
+    }
+
     public String registrarUsuario(String datos, Jugador j) { //datos formato es ---> |registroºvalor:contraseniaºvalor: el recordarmeºvalor (0 Falso o 1 true) va al final
-        String respuesta = "TeamUp|Directriz|Registro de usuario fallido";
+        String respuesta = "TeamUp|Directriz|errOe";
         Map<String, String> mapaDatos = new HashMap<>();
         String [] divisionDatos = datos.split(":"); //nombreºvalor:contraseniaºvalor:recordarmeº0/1:
         for (String dato : divisionDatos) {
@@ -55,11 +84,16 @@ public class SistemaDeJuego {
         }
 
         respuesta = sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"),mapaDatos.get("recordarme"), j);
-        j.setIdUsuario(sv.getBaseDatosManager().obtenerId(mapaDatos.get("nombre")));
-        generadorCarta(mapaDatos.get("posicion1"), mapaDatos.get("posicion2"), mapaDatos.get("nombre"));
-        // tambien tienes que pensar el sistema de verificacion  --->> para simplificar el sistema de verificacio por ahora, vamos a hacer que la cuenta tenga 14 dias de antiguiedad y que haya participado minimo en un partido
-        // y la estadisticas teniendo en cuenta las dos posiciones que haya elegido
-        // llamar a la funcion de del baseDatosManager generar carta debajo de respuesta
+        String [] comprobacionRespuesta = respuesta.split("\\|");
+
+        if (comprobacionRespuesta[2].equals("rC")) {
+            j.setIdUsuario(sv.getBaseDatosManager().obtenerId(mapaDatos.get("nombre")));
+            generadorCarta(mapaDatos.get("posicion1"), mapaDatos.get("posicion2"), mapaDatos.get("nombre"));
+            jugadores.add(j);
+        } else 
+            j.setIdUsuario(-33);
+
+
 
         return respuesta;
 
@@ -121,7 +155,7 @@ public class SistemaDeJuego {
         
     }
 
-        private List<String> obtenerBonus(List<String> posicionesRecibidas) { //primera y tercera mejorar, segunda y cuarta empeorar
+    private List<String> obtenerBonus(List<String> posicionesRecibidas) { //primera y tercera mejorar, segunda y cuarta empeorar
         List<String> estadistica = new ArrayList<>();
 
 
@@ -231,9 +265,6 @@ public class SistemaDeJuego {
         return estadistica;
     }
 
-    public void iniciarSesion() { //correoºvalor:contraseniaºvalor:selectorºdato:tokenªdato
-
-    }
 
 }
 

@@ -53,4 +53,12 @@ public class RememberToken {
     public LocalDateTime getFechaExpiracion() {
         return fechaExpiracion;
     }
+
+    public String getSelector() {
+        return selector;
+    }
+
+    public String getTokenHash() {
+        return tokenHash;
+    }
 }

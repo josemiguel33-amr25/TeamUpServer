@@ -21,4 +21,8 @@ public class Cosmetico {
     public Cosmetico() {
         
     }
+
+    public Cosmetico(String nombre, String tipo, String rareza) {
+        
+    }
 }
