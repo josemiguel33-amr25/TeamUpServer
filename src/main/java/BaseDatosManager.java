@@ -224,8 +224,9 @@ public class BaseDatosManager {
         }
     }
 
-    public String registrarUsuario(String nombre, String correo, String contrasenia, String posicion1, String posicion2, String recordarme, Jugador j) {
+    public String registrarUsuario(String nombre, String contrasenia, String correo, String posicion1, String posicion2, String recordarme, JugadorSistema j) {
         String resultado = "";
+        System.out.println("TeamUp|MensajeInterno|" + nombre + " con correo: " + correo + " con posicion1" + posicion1 + " y con recordarme " + recordarme);
         boolean usuarioExiste = comprobarUsuarioExiste(nombre);
         boolean correoExiste = comprobarCorreoAsociado(correo);
 
@@ -248,6 +249,7 @@ public class BaseDatosManager {
                 
                 Transaction transaction = session.beginTransaction();
                 session.persist(u);
+                System.out.println("TeamUp|MensajeInterno| id del usuario despues del persisit " + u.getId());
 
                 try {
                     transaction.commit();
@@ -342,8 +344,9 @@ public class BaseDatosManager {
         return cancion;
     }
 
-    private List<String> generarRememberToken(Usuario u, Jugador j) { //esto devuelve una lista con selector + el token sin hashear en documenta el proceso que he segudio
+    private List<String> generarRememberToken(Usuario u, JugadorSistema j) { //esto devuelve una lista con selector + el token sin hashear en documenta el proceso que he segudio
         List<String> listaDatos = new ArrayList<>();
+        System.out.println("TeamUp|MensajeInterno|Usario con id" + u.getId() + " con nombre " + u.getNombre());
         String selector = u.getId() + "" + u.getNombre().substring(0,4) + "14" + u.getFechaCreacion().getMinute() + u.getFechaCreacion().getDayOfWeek();
         String cadenaExtra = cadenaAleatoria();
         String token =  u.getFechaCreacion().getHour() + "" + u.getNombre().substring(0,4) + "14" + u.getFechaCreacion().getYear() + u.getFechaCreacion().getMinute() + u.getPosicion1() + cadenaExtra;
@@ -354,7 +357,7 @@ public class BaseDatosManager {
         String ip = datosCliente.getHostAddress();
         String dispositivo = datosCliente.getHostName();
 
-        RememberToken rm = new RememberToken(selector,hashearToken(token),dispositivo, ip);
+        RememberToken rm = new RememberToken(u, selector,hashearToken(token),dispositivo, ip);
 
         try (Session session = sessionFactory.openSession()){
             Transaction transaction = session.beginTransaction();

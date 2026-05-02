@@ -7,7 +7,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-public class Jugador implements  Runnable {
+public class JugadorSistema implements  Runnable {
     private PrintWriter impresora;
     private BufferedReader lector;
     private Socket zocalo;
@@ -15,7 +15,7 @@ public class Jugador implements  Runnable {
     private int idUsuario; // referencia directa al id que tiene dentro de la base de datos, para hacer mas eficiente supongo toda la interaccion
 
 
-    public Jugador(Socket zocalo, SistemaDeJuego sdj) {
+    public JugadorSistema(Socket zocalo, SistemaDeJuego sdj) {
         this.zocalo = zocalo;
         this.sdj = sdj;
         abrirFlujos();
@@ -30,13 +30,19 @@ public class Jugador implements  Runnable {
         }
     }
 
+    public void enviarMensajeDirecto(String mensaje) {
+        if (impresora != null) {
+            impresora.println(mensaje);
+        }
+    }
+
     @Override
     public void run() {
        String linea = "";
         try {
             while ((linea = lector.readLine()) != null) {
                 String feedback = this.sdj.buzon(linea, this);
-                
+                enviarMensajeDirecto(feedback);   
             }
         } catch (IOException em) {
             System.out.println("ERROR FATIDICO |14|");

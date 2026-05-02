@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import claseshibernate.Carta;
 import claseshibernate.Usuario;
 
@@ -20,7 +22,7 @@ public class SistemaDeJuego {
     //creo que no lo necesitamosprivate final String[] ESTADISTICAS_PORTERO = {"estirada","manejo","saque","reflejos","velocidad","posicionamiento"};
     
     private Servidor sv;
-    private Set<Jugador> jugadores = Collections.synchronizedSet(new HashSet<>()); // clientes actualmente conectados
+    private Set<JugadorSistema> jugadores = Collections.synchronizedSet(new HashSet<>()); // clientes actualmente conectados
 
 
 
@@ -28,33 +30,41 @@ public class SistemaDeJuego {
         this.sv = sv;
     }
 
-    public String buzon(String mensaje, Jugador j) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
+    public String buzon(String mensaje, JugadorSistema j) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
         String respuesta = "TeamUp|Directriz|"; 
-        String [] mensajePartido = mensaje.split(";");  // TeamUpCliente;Respuesta|registro|nombreºvalor:contraseniaºvalor:
-        String [] datosDivididos = mensajePartido[1].split("\\|");
-        String datos = datosDivididos[2];
-        String opcion = datosDivididos[1];
-        switch (opcion) { 
-            case "registro":
-                    respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
-                    break;
-            case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
-                    respuesta = iniciarSesion(datos, j); // TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:token:siºselector:valorºhash:valor
-                    break; 
+        System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui con " + mensaje);
+        
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+
+            Map<String, Object> mensajeMapita = mapper.readValue(mensaje, Map.class);
+
+            String opcion = (String) mensajeMapita.get("tipo");
+
+            Map<String, String> datos = mapper.convertValue(
+                mensajeMapita.get("data"),
+                new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {}
+            );
+
+            switch (opcion) { 
+                case "registro":
+                        respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
+                        break;
+                case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
+                        respuesta = iniciarSesion(datos, j); // TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:token:siºselector:valorºhash:valor
+                        break; 
             }
+        } catch (Exception em) {
+            System.out.println("TeamUp|Error|EM5");
+        }
 
         return respuesta;
     }
 
-    public String iniciarSesion(String datos, Jugador j) { //TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:remember:siºselector:valorºtoken:valor
+    public String iniciarSesion(Map<String,String> mapaDatos, JugadorSistema j) { //TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:remember:siºselector:valorºtoken:valor
             String respuesta = "";
+            System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (iniciar sesion) con " + mapaDatos.get("correo"));
             
-            Map<String, String> mapaDatos = new HashMap<>();
-            String [] divisionDatos = datos.split(":"); 
-            for (String dato : divisionDatos) {
-                String [] datoParticionado = dato.split("º");
-                mapaDatos.put(datoParticionado[0], datoParticionado[1]);
-            }
             if (mapaDatos.get("remember").equals("si")) {
                 respuesta = sv.getBaseDatosManager().iniciarSesionToken(mapaDatos.get("selector"), mapaDatos.get("token"));
             } else if (mapaDatos.get("remember").equals("no")) {
@@ -63,9 +73,8 @@ public class SistemaDeJuego {
 
             String [] comprobacionRespuesta = respuesta.split("\\|");
 
-            if (comprobacionRespuesta[2].equals("rC")) {
+            if (comprobacionRespuesta[2].equals("iC")) {
                 j.setIdUsuario(sv.getBaseDatosManager().obtenerId(mapaDatos.get("nombre")));
-                generadorCarta(mapaDatos.get("posicion1"), mapaDatos.get("posicion2"), mapaDatos.get("nombre"));
                 jugadores.add(j);
             } else 
                 j.setIdUsuario(-33);
@@ -74,14 +83,11 @@ public class SistemaDeJuego {
             return respuesta;
     }
 
-    public String registrarUsuario(String datos, Jugador j) { //datos formato es ---> |registroºvalor:contraseniaºvalor: el recordarmeºvalor (0 Falso o 1 true) va al final
+    public String registrarUsuario(Map<String,String> mapaDatos, JugadorSistema j) { //datos formato es ---> |registroºvalor:contraseniaºvalor: el recordarmeºvalor (0 Falso o 1 true) va al final
         String respuesta = "TeamUp|Directriz|errOe";
-        Map<String, String> mapaDatos = new HashMap<>();
-        String [] divisionDatos = datos.split(":"); //nombreºvalor:contraseniaºvalor:recordarmeº0/1:
-        for (String dato : divisionDatos) {
-            String [] datoParticionado = dato.split("º");
-            mapaDatos.put(datoParticionado[0], datoParticionado[1]);
-        }
+        System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (registrar) con " + mapaDatos.get("nombre"));
+
+
 
         respuesta = sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"),mapaDatos.get("recordarme"), j);
         String [] comprobacionRespuesta = respuesta.split("\\|");

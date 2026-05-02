@@ -58,8 +58,8 @@ public class Servidor {
                 while (true) {
                     try {
                         Socket cliente  = zocaloServidor.accept();
-                        Jugador j = new Jugador(cliente, sdj);
-                        Thread hilo = new Thread(j);
+                        JugadorSistema j = new JugadorSistema(cliente, sdj);
+                        Thread hilo = new Thread(j); //usar executor service que para algo esta
                         hilo.start();
                     } catch (IOException em) {
                         System.out.println("TeamUp|Error|EM1|");

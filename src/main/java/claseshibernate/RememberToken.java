@@ -41,13 +41,14 @@ public class RememberToken {
         
     }
 
-    public RememberToken(String selector, String tokenHash, String dispositivo, String ip) {
+    public RememberToken(Usuario usuario, String selector, String tokenHash, String dispositivo, String ip) {
         this.selector = selector;
         this.tokenHash = tokenHash;
         this.dispositivo = dispositivo;
         this.fechaCreacion = LocalDateTime.now();
         this.fechaExpiracion = fechaCreacion.plusMonths(1);
         this.ip = ip;
+        this.usuario = usuario;
     }
 
     public LocalDateTime getFechaExpiracion() {
