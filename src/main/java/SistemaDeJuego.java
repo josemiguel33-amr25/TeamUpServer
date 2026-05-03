@@ -55,7 +55,7 @@ public class SistemaDeJuego {
                         break; 
             }
         } catch (Exception em) {
-            System.out.println("TeamUp|Error|EM5");
+            System.out.println("TeamUp|Error|EM5" + em.getMessage());
         }
 
         return respuesta;
@@ -68,16 +68,14 @@ public class SistemaDeJuego {
             if (mapaDatos.get("remember").equals("si")) {
                 respuesta = sv.getBaseDatosManager().iniciarSesionToken(mapaDatos.get("selector"), mapaDatos.get("token"));
             } else if (mapaDatos.get("remember").equals("no")) {
-                respuesta = sv.getBaseDatosManager().iniciarSesionContrasenia(mapaDatos.get("correo"), mapaDatos.get("contrasenia"));
+                respuesta = sv.getBaseDatosManager().iniciarSesionContrasenia(mapaDatos.get("correo"), mapaDatos.get("contrasenia"), j);
             }
 
             String [] comprobacionRespuesta = respuesta.split("\\|");
 
-            if (comprobacionRespuesta[2].equals("iC")) {
-                j.setIdUsuario(sv.getBaseDatosManager().obtenerId(mapaDatos.get("nombre")));
+            if (j.getIdUsuario() != -33) 
                 jugadores.add(j);
-            } else 
-                j.setIdUsuario(-33);
+            
 
 
             return respuesta;
@@ -92,13 +90,11 @@ public class SistemaDeJuego {
         respuesta = sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"),mapaDatos.get("recordarme"), j);
         String [] comprobacionRespuesta = respuesta.split("\\|");
 
-        if (comprobacionRespuesta[2].equals("rC")) {
-            j.setIdUsuario(sv.getBaseDatosManager().obtenerId(mapaDatos.get("nombre")));
+        if (j.getIdUsuario() != -33) {
+            System.out.println("TeamUp|MensajeInterno|Voy a entrar a generador de carta con: " + j.getIdUsuario());
             generadorCarta(mapaDatos.get("posicion1"), mapaDatos.get("posicion2"), mapaDatos.get("nombre"));
             jugadores.add(j);
-        } else 
-            j.setIdUsuario(-33);
-
+        }
 
 
         return respuesta;
@@ -107,7 +103,9 @@ public class SistemaDeJuego {
 
     private void generadorCarta(String posicion1, String posicion2, String nombre) {
         Random generador = new Random();
+        System.out.println("TeamUp|MensajeInterno|Estoy dedntro de generador de carta, buenas con usuario " + nombre);
         Usuario usu = sv.getBaseDatosManager().obtenerUsuario(nombre);
+        System.out.println("TeamUp|MensajeInterno|He obtenido el siguiente usuario: " + usu.getNombre() + " con " + usu.getId());
         if (posicion1.equals("por") || posicion2.equals("por")) {
             String posicionCampo = "";
             if (!posicion1.equals("por")) {
@@ -135,16 +133,18 @@ public class SistemaDeJuego {
             c.setManejo(BASE_PORTER + generador.nextInt(8));
             c.setVelocidad(BASE_PORTER + generador.nextInt(8));
             c.setEstirada(BASE_PORTER + generador.nextInt(8));
-            
+            System.out.println("TeamUp|MensajeInterno|Carta con estadisticas " + c.getRegate() + " regate");
             sv.getBaseDatosManager().registrarCarta(c);
 
         } else {
+            System.out.println("TeamUp|MensajeInterno|Entramos en el else donde se crean las cartas para gente con posicion de campo no portero");
             List<String>posiciones = new ArrayList<>();
             posiciones.add(posicion1);
             posiciones.add(posicion2);
             List<String> estadisticasCambiantes = obtenerBonus(posiciones);
+            System.out.println("TeamUp|MensajeInterno|Tamanio de estadisticas cambiantes " + estadisticasCambiantes.size());
             Map<String, Integer> estadisticasCampo = new HashMap<>();
-            for (String estadistica : estadisticasCambiantes) {
+            for (String estadistica : ESTADISTICAS_CAMPO) {
                 int sumaEstadistica = 70 + generador.nextInt(4)+1;
                 if (estadistica.equals(estadisticasCambiantes.get(0)) || estadistica.equals(estadisticasCambiantes.get(2))) {
                     estadisticasCampo.put(estadistica, sumaEstadistica + 5);
@@ -179,7 +179,7 @@ public class SistemaDeJuego {
         List<String> estadistica = new ArrayList<>();
         Random generador = new Random();
         int caraCruz = generador.nextInt(2);
-
+        System.out.println("TeamUp|MensajeInterno|Entramos en obtener bonus");
 
         switch (posicion) {
             case "dc" :

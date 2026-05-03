@@ -45,20 +45,21 @@ public class Carta {
         
     }
 
-    public Carta(int ritmo, int tiro, int pase, int regate, int defensa, int fisico, Usuario u, Cosmetico c) {
+    public Carta(int ritmo, int tiro, int pase, int regate, int defensa, int fisico, Usuario usuario, Cosmetico cosmetico) {
         this.ritmo = ritmo;
         this.tiro = tiro;
         this.pase = pase;
         this.regate = regate;
         this.defensa = defensa;
         this.fisico = fisico;
+        this.usuario = usuario;
+        this.cosmetico = cosmetico;
         estirada = 50;
         manejo = 50;
         saque = 50;
         reflejos = 50;
         velocidad = 50;
         posicionamiento = 50;
-        cosmetico = c;
         
     }
 
@@ -112,6 +113,66 @@ public class Carta {
 
     public void setEstirada(int estirada) {
         this.estirada = estirada;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getRitmo() {
+        return ritmo;
+    }
+
+    public int getTiro() {
+        return tiro;
+    }
+
+    public int getPase() {
+        return pase;
+    }
+
+    public int getRegate() {
+        return regate;
+    }
+
+    public int getDefensa() {
+        return defensa;
+    }
+
+    public int getFisico() {
+        return fisico;
+    }
+
+    public int getEstirada() {
+        return estirada;
+    }
+
+    public int getManejo() {
+        return manejo;
+    }
+
+    public int getSaque() {
+        return saque;
+    }
+
+    public int getReflejos() {
+        return reflejos;
+    }
+
+    public int getVelocidad() {
+        return velocidad;
+    }
+
+    public int getPosicionamiento() {
+        return posicionamiento;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public Cosmetico getCosmetico() {
+        return cosmetico;
     }
 
     

@@ -135,7 +135,7 @@ public class BaseDatosManager {
 
     
     //devuelve string pero pongo void para que no salga en rojo
-    public String iniciarSesionContrasenia(String correo, String contrasenia) { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
+    public String iniciarSesionContrasenia(String correo, String contrasenia, JugadorSistema j) { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
         // si no tiene remember token usamos la funcion que tenemos para comprobar contraseña, si tiene remember token creo que tenemos funcion para comprobar rmemeber token
         String respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIn";
         boolean correoExiste = comprobarCorreoAsociado(correo);
@@ -143,8 +143,11 @@ public class BaseDatosManager {
             respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIncnoe";
         } else if (!comprobarUsuario(correo, contrasenia))
             respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIncin";
-        else
+        else {
+            Usuario u = obtenerUsuarioPorCorreo(correo);
             respuesta = "TeamUp|Directriz|Inicio Sesion Correcto|iC";
+            j.setIdUsuario(u.getId());
+        }
         
         
         return respuesta;
@@ -254,6 +257,7 @@ public class BaseDatosManager {
                 try {
                     transaction.commit();
                     System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
+                    j.setIdUsuario(u.getId());
                 } catch (IllegalStateException em) {
                     System.out.println("TeamUp|Error|EM2|.");
                 }
@@ -356,7 +360,7 @@ public class BaseDatosManager {
         InetAddress datosCliente = j.getZocalo().getInetAddress();
         String ip = datosCliente.getHostAddress();
         String dispositivo = datosCliente.getHostName();
-
+        System.out.println("TeamUp|MensajeInterno|Remember token con selector:  " + selector + " y para el usuario con nombre: " + u.getNombre());
         RememberToken rm = new RememberToken(u, selector,hashearToken(token),dispositivo, ip);
 
         try (Session session = sessionFactory.openSession()){

@@ -12,7 +12,7 @@ public class JugadorSistema implements  Runnable {
     private BufferedReader lector;
     private Socket zocalo;
     private SistemaDeJuego sdj;
-    private int idUsuario; // referencia directa al id que tiene dentro de la base de datos, para hacer mas eficiente supongo toda la interaccion
+    private int idUsuario = -33; // referencia directa al id que tiene dentro de la base de datos, para hacer mas eficiente supongo toda la interaccion
 
 
     public JugadorSistema(Socket zocalo, SistemaDeJuego sdj) {
