@@ -1,0 +1,49 @@
+9Miki1452SUNDAY:13Miki14202652dcgraxxqjsm selector y token para usuario Miki410
+
+contrasenia 1234@5311@M6aa
+Miki410
+
+
+{"tipo":"registro","data":{"nombre":"Miki410","correo":"miki14@gmail.com","contrasenia":"1234@5311@M6aa","posicion1":"dc","posicion2":"mc","recordarme":"1"}} cadena de prueba
+
+
+Esto es para el usuario BrunnoFernandes correo miki4142@gmail.com contrasenia 1234@5311@M416aa
+
+Servidor: TeamUp|Directriz|Registro Completo|rCºtoken:12Brun140SUNDAY:14Brun1420260dcpasiempre
+
+
+
+
+
+{"tipo":"registro","data":{"nombre":"Judei410","correo":"miki14421334@gmail.com","contrasenia":"1234@5311@M6aa","posicion1":"dc","posicion2":"mc","recordarme":"1"}}
+Servidor: TeamUp|Directriz|Registro Completo|rCºtoken:13Jude144SUNDAY:14Jude1420264dccuandomevaya
+
+
+
+
+NUEVOS REGISTRO CON EL NUEVO FORMATo
+
+Cadena que le mando
+{"tipo":"registro","data":{"nombre":"SalahMane410","correo":"miki1444214@gmail.com","contrasenia":"1234@5311@M6aa","posicion1":"dc","posicion2":"mc","recordarme":"1"}}
+
+Lo que recibo
+Servidor: {"codigo":"rC","datos":{"selector":"14Sala1444FRIDAY","token":"10Sala14202644dclologre"},"mensaje":"Registro completo","status":"Perfecto"}
+
+
+Cadena que le mando
+{"tipo":"registro","data":{"nombre":"SalahMane","correo":"miki1444213@gmail.com","contrasenia":"1234Mourvinidupla@","posicion1":"dc","posicion2":"por","recordarme":"0"}}
+
+Servidor me da
+Servidor: {"codigo":"rC","mensaje":"Registro Completo","status":"Perfecto"}
+
+Mando
+{"tipo":"iniciarSesion","data":{"correo":"miki1444213@gmail.com","contrasenia":"1234Mourvinidupla@","remember":"no"}}
+Recibo
+Servidor: {"codigo":"iC","mensaje":"Inicio de sesion correcto","status":"Perfecto"}
+
+
+Mando
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"14Sala1444FRIDAY","token":"10Sala14202644dclologre"}}
+
+Recibo
+Servidor: {"codigo":"iCcTkC","mensaje":"Inicio de sesión correcto","status":"Perfecto"}

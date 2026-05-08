@@ -32,9 +32,20 @@
         <property name="hibernate.validator.apply_to_ddl">false</property>
   -->  
 
-        <mapping class="ejercicio.Alumno"/>
-        <mapping class="ejercicio.Modulo"/>
-        <mapping class="ejercicio.Trabajos"/>
+        <mapping class="claseshibernate.Usuario"/>
+        <mapping class="claseshibernate.Carta"/>
+        <mapping class="claseshibernate.Partido"/>
+        <mapping class="claseshibernate.Participacion"/>
+        <mapping class="claseshibernate.Sobre"/>
+        <mapping class="claseshibernate.ContenidoSobre"/>
+        <mapping class="claseshibernate.Cosmetico"/>
+        <mapping class="claseshibernate.Inventario"/>
+        <mapping class="claseshibernate.InventarioCosmetico"/>
+        <mapping class="claseshibernate.Intercambio"/>
+        <mapping class="claseshibernate.IntercambioItem"/>
+        <mapping class="claseshibernate.Ranking"/>
+        <mapping class="claseshibernate.Reporte"/>
+        <mapping class="claseshibernate.RememberToken"/>
 <!-- 
         <mapping class="ejercicio.Alumno"/>
         <mapping class="ejercicio.Modulo"/>

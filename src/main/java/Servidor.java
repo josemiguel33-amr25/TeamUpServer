@@ -2,35 +2,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import EjemplosServer.Juego;
-import EjemplosServer.Jugador;
-import EjemplosServer.Producto;
+
 
 public class Servidor {
-
-    private static final String rutaProperties = "";
 
     private ExecutorService ejecutador;
     private Properties propiedades;
     private ServerSocket zocaloServidor;
+    private BaseDatosManager baseDatosManager;
+    private SistemaDeJuego sdj;
 
 
     public Servidor() {
         propiedades = new Properties();
+        baseDatosManager = new BaseDatosManager();
+        sdj = new SistemaDeJuego(this);
         cargarPropiedades();
         ejecutador = Executors.newFixedThreadPool(Integer.parseInt(propiedades.getProperty("maxConnections")));
+
         try {
             zocaloServidor = new ServerSocket(Integer.parseInt(propiedades.getProperty("port")));
-        } catch (UnknownHostException em) {
-            System.out.println("ERROR FATIDICO NO CONOZCO AL HOST :( |13| |14| |33|");
-        } catch (IOException me) {
-            System.out.println("ERROR FATIDICO CREANDO SERVER |23| |13| |14| ");
+        }  catch (IOException em) {
+            System.out.println("TeamUp|Error|EM1|");
         }   
     }
 
@@ -39,35 +36,49 @@ public class Servidor {
             InputStream inEm = Servidor.class.getResourceAsStream("configuracion.properties");
             propiedades.load(inEm);
         } catch (Exception em) {
-            System.out.println("ERROR FATIDICO |14| AL CARGAR PROPIEDADES");
+            System.out.println("TeamUp|Error|EM0|");
         }
     }
 
     public void iniciarServidor() {
-        while (true) {
-            System.out.println("SERVIDOR INICIADO");
-            System.out.println("DEPURACION|PARTIDA NUMERO" + contadorPartidas);
-            while (jugadores.size() < cantidadJugadores) {
-                try {
-                    Socket cliente  = zocaloServidor.accept();
-                    Jugador j = new Jugador(cliente, contador, juego);
-                    jugadores.add(j);
-                    ejecutador.execute(j);
-                    contador++;
-                } catch (IOException em) {
-                    System.out.println("ERROR FATIDICO |14|");
+        if (baseDatosManager.comprobarConexion()) {
+            while (true) {
+                System.out.println("TeamUp|MensajeInterno| Servidor Iniciado");
+                System.out.println("TeamUp|MensajeInterno| Iniciando Conexión Con Base De Datos");
+                
+                System.out.println("TeamUp|MensajeInterno| Iniciando comprobacion de verificacion de cuentas");
+                baseDatosManager.verificadorCuentas();
+
+                System.out.println("TeamUp|MensajeInterno| Iniciando comprobacion de token expirados");
+                baseDatosManager.verificadorExpiracionToken();
+
+                
+                System.out.println("\n\n\nTeamUp|MensajeInterno| Comprobaciones terminadas \n SERVIDOR INICIADO");
+
+                while (true) {
+                    try {
+                        Socket cliente  = zocaloServidor.accept();
+                        JugadorSistema j = new JugadorSistema(cliente, sdj);
+                        Thread hilo = new Thread(j); //usar executor service que para algo esta
+                        hilo.start();
+                    } catch (IOException em) {
+                        System.out.println("TeamUp|Error|EM1|");
+                    }
                 }
+            
             }
-            contadorPartidas++;
-            if (contadorPartidas == numeroPartidas) {
-                break;
-            }
-        }
+        } else
+            System.out.println("TeamUp|Error|EM2|");
     }
 
 
     public static void main(String[] args) {
         System.out.println(Servidor.class.getClassLoader().getResource("configuracion.properties"));
         Servidor sv = new Servidor();
+        sv.iniciarServidor();
+    }
+
+    public BaseDatosManager getBaseDatosManager() {
+        return baseDatosManager;
     }
 }
