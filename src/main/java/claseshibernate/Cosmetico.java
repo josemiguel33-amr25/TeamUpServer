@@ -29,4 +29,16 @@ public class Cosmetico {
     public String getNombre() {
         return nombre;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public String getRareza() {
+        return rareza;
+    }
 }

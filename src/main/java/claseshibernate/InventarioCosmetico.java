@@ -29,4 +29,26 @@ public class InventarioCosmetico {
     public InventarioCosmetico() {
         
     }
+
+    public InventarioCosmetico(int cantidad, Inventario inventario, Cosmetico cosmetico) {
+        this.cantidad = cantidad;
+        this.inventario = inventario;
+        this.cosmetico = cosmetico;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getCantidad() {
+        return cantidad;
+    }
+
+    public Inventario getInventario() {
+        return inventario;
+    }
+
+    public Cosmetico getCosmetico() {
+        return cosmetico;
+    }
 }

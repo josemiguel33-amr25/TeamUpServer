@@ -23,4 +23,8 @@ public class Inventario {
     public Inventario() {
         
     }
+
+    public Inventario(Usuario usuario) {
+        this.usuario = usuario;
+    }
 }

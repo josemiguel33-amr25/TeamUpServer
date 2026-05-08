@@ -20,6 +20,8 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import claseshibernate.Carta;
 import claseshibernate.Cosmetico;
+import claseshibernate.Inventario;
+import claseshibernate.InventarioCosmetico;
 import claseshibernate.RememberToken;
 import claseshibernate.Usuario;
 
@@ -134,6 +136,32 @@ public class BaseDatosManager {
         }
         System.out.println("TeamUp|MensajeInterno|Tokens eliminados por caducados -----> " + contadorTokenExpirados);
     }
+
+
+    public String obtenerInventarioUsuario(int idUsuario) {
+        String respuesta = "";
+
+        try (Session session = sessionFactory.openSession()){
+            Query<InventarioCosmetico> q = session.createQuery( "FROM InventarioCosmetico WHERE inventario.usuario.id = :idUsuario", InventarioCosmetico.class);
+
+            q.setParameter("idUsuario", idUsuario);
+
+            List<InventarioCosmetico> listaProcesar = q.list();
+            List<Cosmetico> cosmeticos = new ArrayList<>();
+
+            for (InventarioCosmetico elemento : listaProcesar) {
+                cosmeticos.add(elemento.getCosmetico());
+            }
+            Map<String, Object> datos = new HashMap<>();
+
+            datos.put("cosmeticos", cosmeticos);
+            respuesta = AyudanteConteston.contestarTodoBien("iNe", "Inventario enviado", datos);
+        }
+
+        return respuesta;
+    }
+    
+
 
     
     //devuelve string pero pongo void para que no salga en rojo
@@ -251,6 +279,59 @@ public class BaseDatosManager {
         }
     }
 
+    private void crearInventario(Usuario u) {
+        System.out.println("TeamUp|MensajeInterno| Hemos entrado para crear inventario"); 
+        try (Session session = sessionFactory.openSession()) {
+            Inventario inv = new Inventario(u);
+            Transaction transaction = session.beginTransaction();
+            session.persist(inv);
+
+
+            try {
+                transaction.commit();
+                System.out.println("TeamUp|MensajeInterno|Inventario creado");
+            } catch (IllegalStateException em) {
+                System.out.println("TeamUp|Error|EM2|.");
+            }
+
+            // todo esto son cosmeticos default que todo usuario consigue automaticamente al crear su perfil
+            Cosmetico c1 = obtenerCosmetico(1); // carta comun 
+            Cosmetico c2 = obtenerCosmetico(2); // tarjeta visita
+            Cosmetico c3 = obtenerCosmetico(3); // titulo rookie
+            System.out.println("TeamUp|MensajeInterno| cosmetico 1 con nombre:" + c1.getNombre());
+            System.out.println("TeamUp|MensajeInterno| cosmetico 2 con nombre:" + c2.getNombre());
+            System.out.println("TeamUp|MensajeInterno| cosmetico 3 con nombre:" + c3.getNombre());
+
+
+            InventarioCosmetico ic1 = new InventarioCosmetico(1, inv, c1);
+            InventarioCosmetico ic2 = new InventarioCosmetico(1, inv, c2);
+            InventarioCosmetico ic3 = new InventarioCosmetico(1, inv, c3);
+
+            persistirObjeto(ic1);
+            persistirObjeto(ic2);
+            persistirObjeto(ic3);
+                  
+        
+        }
+    }
+
+    private void persistirObjeto(Object objeto) { // la verdad se me ocurro probarlo y me sorprendio que funcionará, si no esta usado mucho es que lo pense mucho mucho mas tarde para los cosmeticos por eso la mayoria de cosas no usan esta funcion
+        try (Session session = sessionFactory.openSession()) {
+            session.persist(objeto);
+            Transaction transaction = session.beginTransaction();
+            
+            try {
+                transaction.commit();
+                System.out.println("TeamUp|MensajeInterno|Objetos añadidos al inventario");
+            } catch (IllegalStateException em) {
+                System.out.println("TeamUp|Error|EM2|");
+            }  
+
+        }
+    }   
+
+    
+
     public String registrarUsuario(String nombre, String contrasenia, String correo, String posicion1, String posicion2, String recordarme, JugadorSistema j) {
         String resultado = "";
         System.out.println("TeamUp|MensajeInterno|" + nombre + " con correo: " + correo + " con posicion1" + posicion1 + " y con recordarme " + recordarme);
@@ -272,7 +353,7 @@ public class BaseDatosManager {
                 resultado = AyudanteConteston.contestarError("errCo", "La contraseña no cumple los minimos de seguridad");
             } else {
                 String contraseniaEncriptada  = encriptarContrasenia(contrasenia);
-                Usuario u = new Usuario(nombre, correo, contraseniaEncriptada, posicion1, posicion2);
+                Usuario u = new Usuario(nombre, correo, contraseniaEncriptada, posicion1, posicion2, obtenerCosmetico(2), obtenerCosmetico(3));
                 
                 Transaction transaction = session.beginTransaction();
                 session.persist(u);
@@ -285,6 +366,8 @@ public class BaseDatosManager {
                 } catch (IllegalStateException em) {
                     System.out.println("TeamUp|Error|EM2|.");
                 }
+
+                crearInventario(u);
 
                 if (recordarme.equals("1")) {
                     Map<String,Object> datos = new HashMap<>();

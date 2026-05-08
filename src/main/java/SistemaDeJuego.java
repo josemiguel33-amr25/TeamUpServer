@@ -61,7 +61,7 @@ public class SistemaDeJuego {
                         respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
                         break;
                 case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
-                        respuesta = iniciarSesion(datos, j); // TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:token:siºselector:valorºhash:valor
+                        respuesta = iniciarSesion(datos, j); 
                         break;
                 case "ranking":
                         break;
@@ -71,6 +71,9 @@ public class SistemaDeJuego {
                         break;
                 case "partidosJugados":
                         // aqui es cuando el usuario quiere ver el historial de partidos que ha jugado, pasamos los partidos que ha jugado facil, con toda la informacion de los partidos
+                        break;
+                case "inventarioJugador":
+                        respuesta = obtenerInventarioJugador(j.getIdUsuario()); //puedo aprovechar que el JugadorSistema tiene la id del usuario del que esta registrado y que aqui solo se puede llegar si esstas registrado
                         break;
             }
         } catch (Exception em) {
@@ -89,7 +92,11 @@ public class SistemaDeJuego {
         return respuesta;
     }
 
-    public String iniciarSesion(Map<String,String> mapaDatos, JugadorSistema j) { //TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:remember:siºselector:valorºtoken:valor
+    public String obtenerInventarioJugador(int idUsuario) {
+        return sv.getBaseDatosManager().obtenerInventarioUsuario(idUsuario);
+    }
+
+    public String iniciarSesion(Map<String,String> mapaDatos, JugadorSistema j) { 
             String respuesta = "";
             System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (iniciar sesion) con " + mapaDatos.get("correo"));
             
@@ -108,7 +115,7 @@ public class SistemaDeJuego {
             return respuesta;
     }
 
-    public String registrarUsuario(Map<String,String> mapaDatos, JugadorSistema j) { //datos formato es ---> |registroºvalor:contraseniaºvalor: el recordarmeºvalor (0 Falso o 1 true) va al final
+    public String registrarUsuario(Map<String,String> mapaDatos, JugadorSistema j) { 
         String respuesta = "TeamUp|Directriz|errOe";
         System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (registrar) con " + mapaDatos.get("nombre"));
 

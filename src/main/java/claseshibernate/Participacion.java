@@ -21,6 +21,9 @@ public class Participacion {
     private boolean asistio;
     private String equipo;
 
+    private int goles;
+    private int asistencias;
+
     @ManyToOne
     @JoinColumn(name="usuario_id")
     private Usuario usuario;

@@ -68,7 +68,7 @@ public class Usuario {
 
     }
 
-    public Usuario(String nombre, String correo, String contrasenia, String posicion1, String posicion2) {
+    public Usuario(String nombre, String correo, String contrasenia, String posicion1, String posicion2, Cosmetico tarjetaVisita, Cosmetico titulo) {
         this.nombre = nombre;
         this.correo = correo;
         this.contrasena = contrasenia;
@@ -79,6 +79,9 @@ public class Usuario {
         this.verificado = false; //para simplificar el sistema de verificacio por ahora, vamos a hacer que la cuenta tenga 14 dias de antiguiedad y que haya participado minimo en un partido
         this.puntos = 0;
         this.rango = 1;
+        this.fotoPerfil = "default";
+        this.tarjetaVisita = tarjetaVisita;
+        this.titulo = titulo;
     }
 
     public String getNombre() {
