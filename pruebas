@@ -47,3 +47,13 @@ Mando
 
 Recibo
 Servidor: {"codigo":"iCcTkC","mensaje":"Inicio de sesión correcto","status":"Perfecto"}
+
+Mando
+{"tipo":"rangos","data":{}}
+
+
+Servidor: {"codigo":"Er","datos":{"rangos":
+[{"puntosMin":0,"puntosMax":150,"nombreSobre":"sobreBronce","nombreRango":"Bronce"},
+{"puntosMin":150,"puntosMax":300,"nombreSobre":"sobrePlata","nombreRango":"Plata"},
+{"puntosMin":300,"puntosMax":450,"nombreSobre":"sobreOro","nombreRango":"Oro"},
+{"puntosMin":450,"puntosMax":600,"nombreSobre":"sobreElite","nombreRango":"Elite"}]},"mensaje":"Rangos enviados","status":"Perfecto"}

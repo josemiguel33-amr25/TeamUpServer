@@ -25,4 +25,8 @@ public class Cosmetico {
     public Cosmetico(String nombre, String tipo, String rareza) {
         
     }
+
+    public String getNombre() {
+        return nombre;
+    }
 }

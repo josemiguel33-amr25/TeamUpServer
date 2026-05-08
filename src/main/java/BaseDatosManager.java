@@ -147,7 +147,18 @@ public class BaseDatosManager {
             respuesta = AyudanteConteston.contestarError("erIncin", "La contraseña introducida es incorrecta");
         else {
             Usuario u = obtenerUsuarioPorCorreo(correo);
-            respuesta = AyudanteConteston.contestarTodoBien("iC", "Inicio de sesion correcto", null);
+            Map<String,Object> datos = new HashMap<>();
+            datos.put("nombre", u.getNombre());
+            datos.put("posicion1", u.getPosicion1());
+            datos.put("posicion2", u.getPosicion2());
+            datos.put("correo", u.getCorreo());
+            datos.put("titulo", u.getTitulo().getNombre());
+            datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
+            datos.put("goles", u.getGoles());
+            datos.put("asistencias", u.getAsistencias());
+            datos.put("mvp", u.getMvps());
+            datos.put("partidosJugados", u.getPartidosJugados());
+            respuesta = AyudanteConteston.contestarTodoBien("iC", "Inicio de sesion correcto", datos);
             j.setIdUsuario(u.getId());
         }
         
@@ -162,8 +173,20 @@ public class BaseDatosManager {
         if (!rememberTokenExiste) {
             respuesta = AyudanteConteston.contestarError("ertkNe", "El token no existe");
         } else if (comprobarRememberToken(selector, token)) {
-            respuesta = AyudanteConteston.contestarTodoBien("iCcTkC", "Inicio de sesión correcto", null);
-            j.setIdUsuario(obtenerRememberToken(selector).getUsuario().getId());
+            Usuario u = obtenerRememberToken(selector).getUsuario();
+            Map<String,Object> datos = new HashMap<>();
+            datos.put("nombre", u.getNombre());
+            datos.put("posicion1", u.getPosicion1());
+            datos.put("posicion2", u.getPosicion2());
+            datos.put("correo", u.getCorreo());
+            datos.put("titulo", u.getTitulo().getNombre());
+            datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
+            datos.put("goles", u.getGoles());
+            datos.put("asistencias", u.getAsistencias());
+            datos.put("mvp", u.getMvps());
+            datos.put("partidosJugados", u.getPartidosJugados());
+            respuesta = AyudanteConteston.contestarTodoBien("iCcTkC", "Inicio de sesión correcto", datos);
+            j.setIdUsuario(u.getId());
         }
 
         return respuesta;
@@ -268,10 +291,30 @@ public class BaseDatosManager {
                     List<String> lista = generarRememberToken(u, j);
                     datos.put("selector", lista.get(0));
                     datos.put("token", lista.get(1));
-                    resultado = "TeamUp|Directriz|Registro Completo|rCºtoken:" + lista.get(0) + ":" + lista.get(1);
+                    datos.put("nombre", u.getNombre());
+                    datos.put("posicion1", u.getPosicion1());
+                    datos.put("posicion2", u.getPosicion2());
+                    datos.put("correo", u.getCorreo());
+                    datos.put("titulo", u.getTitulo().getNombre());
+                    datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
+                    datos.put("goles", u.getGoles());
+                    datos.put("asistencias", u.getAsistencias());
+                    datos.put("mvp", u.getMvps());
+                    datos.put("partidosJugados", u.getPartidosJugados());
                     resultado = AyudanteConteston.contestarTodoBien("rC", "Registro completo", datos);
                 } else {
-                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro Completo", null);
+                    Map<String,Object> datos = new HashMap<>();
+                    datos.put("nombre", u.getNombre());
+                    datos.put("posicion1", u.getPosicion1());
+                    datos.put("posicion2", u.getPosicion2());
+                    datos.put("correo", u.getCorreo());
+                    datos.put("titulo", u.getTitulo().getNombre());
+                    datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
+                    datos.put("goles", u.getGoles());
+                    datos.put("asistencias", u.getAsistencias());
+                    datos.put("mvp", u.getMvps());
+                    datos.put("partidosJugados", u.getPartidosJugados());
+                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro Completo", datos); 
                 }
             }
         }

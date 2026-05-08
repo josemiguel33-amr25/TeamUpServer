@@ -13,6 +13,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import clases.Rango;
 import claseshibernate.Carta;
 import claseshibernate.Usuario;
 
@@ -22,16 +23,25 @@ public class SistemaDeJuego {
     //creo que no lo necesitamosprivate final String[] ESTADISTICAS_PORTERO = {"estirada","manejo","saque","reflejos","velocidad","posicionamiento"};
     
     private Servidor sv;
+    private List<Rango> listaRangos = new ArrayList<>();
     private Set<JugadorSistema> jugadores = Collections.synchronizedSet(new HashSet<>()); // clientes actualmente conectados
 
 
 
     public SistemaDeJuego(Servidor sv) {
         this.sv = sv;
+        prepararRangos();
+    }
+
+    public void prepararRangos() {
+        listaRangos.add(new Rango(0, 150, "sobreBronce", "Bronce"));
+        listaRangos.add(new Rango(150, 300, "sobrePlata", "Plata"));
+        listaRangos.add(new Rango(300, 450, "sobreOro", "Oro"));
+        listaRangos.add(new Rango(450, 600, "sobreElite", "Elite"));
     }
 
     public String buzon(String mensaje, JugadorSistema j) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
-        String respuesta = "TeamUp|Directriz|"; 
+        String respuesta = ""; 
         System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui con " + mensaje);
         
         try {
@@ -52,11 +62,29 @@ public class SistemaDeJuego {
                         break;
                 case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
                         respuesta = iniciarSesion(datos, j); // TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:token:siºselector:valorºhash:valor
-                        break; 
+                        break;
+                case "ranking":
+                        break;
+                case "rangos": // al entrar a ver los rangos
+                        System.out.println("TeamUp|MensajeInterno|Entro en rangos");
+                        respuesta = obtenerRangos();
+                        break;
+                case "partidosJugados":
+                        // aqui es cuando el usuario quiere ver el historial de partidos que ha jugado, pasamos los partidos que ha jugado facil, con toda la informacion de los partidos
+                        break;
             }
         } catch (Exception em) {
             System.out.println("TeamUp|Error|EM5" + em.getMessage());
         }
+
+        return respuesta;
+    }
+
+    public String obtenerRangos() {
+        Map<String, Object> datos = new HashMap<>();
+        datos.put("rangos", listaRangos);
+        String respuesta = AyudanteConteston.contestarTodoBien("Er", "Rangos enviados", datos);
+
 
         return respuesta;
     }

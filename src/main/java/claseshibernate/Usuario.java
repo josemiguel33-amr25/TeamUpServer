@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -40,6 +42,27 @@ public class Usuario {
 
     @OneToMany(mappedBy="usuario")
     private Set<RememberToken> tokens;
+
+    @Column(name="foto_perfil")
+    private String fotoPerfil;
+
+
+    @ManyToOne
+    @JoinColumn(name="titulo_id")
+    private Cosmetico titulo;
+
+    @ManyToOne
+    @JoinColumn(name="tarjeta_visita_id")
+    private Cosmetico tarjetaVisita;
+
+
+    private int goles;
+    private int asistencias;
+
+    @Column(name="partidos_jugados")
+    private int partidosJugados;
+
+    private int mvps;
 
     public Usuario() {
 
@@ -84,5 +107,49 @@ public class Usuario {
 
     public void setVerificado(boolean verificado) {
         this.verificado = verificado;
+    }
+
+    public String getCorreo() {
+        return correo;
+    }
+
+    public int getReputacion() {
+        return reputacion;
+    }
+
+    public int getPuntos() {
+        return puntos;
+    }
+
+    public int getRango() {
+        return rango;
+    }
+
+    public Cosmetico getTitulo() {
+        return titulo;
+    }
+
+    public Cosmetico getTarjetaVisita() {
+        return tarjetaVisita;
+    }
+
+    public String getFotoPerfil() {
+        return fotoPerfil;
+    }
+
+    public int getGoles() {
+        return goles;
+    }
+
+    public int getAsistencias() {
+        return asistencias;
+    }
+
+    public int getPartidosJugados() {
+        return partidosJugados;
+    }
+
+    public int getMvps() {
+        return mvps;
     }
 }

@@ -17,7 +17,7 @@ public class Sobre {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private int id;
 
-    private String nombre;
+    private String nombre; // el nombre tambien funciona como ruta para la imagen del sobre
     private String temporada;
 
     @OneToMany(mappedBy="sobre")
