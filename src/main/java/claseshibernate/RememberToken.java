@@ -62,4 +62,8 @@ public class RememberToken {
     public String getTokenHash() {
         return tokenHash;
     }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
 }

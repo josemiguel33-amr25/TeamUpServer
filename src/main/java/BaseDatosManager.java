@@ -6,7 +6,9 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -137,15 +139,15 @@ public class BaseDatosManager {
     //devuelve string pero pongo void para que no salga en rojo
     public String iniciarSesionContrasenia(String correo, String contrasenia, JugadorSistema j) { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
         // si no tiene remember token usamos la funcion que tenemos para comprobar contraseña, si tiene remember token creo que tenemos funcion para comprobar rmemeber token
-        String respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIn";
+        String respuesta = "";
         boolean correoExiste = comprobarCorreoAsociado(correo);
         if (!correoExiste) {
-            respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIncnoe";
+            respuesta = AyudanteConteston.contestarError("erIncnoe", "El correo introducido no existe");
         } else if (!comprobarUsuario(correo, contrasenia))
-            respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|erIncin";
+            respuesta = AyudanteConteston.contestarError("erIncin", "La contraseña introducida es incorrecta");
         else {
             Usuario u = obtenerUsuarioPorCorreo(correo);
-            respuesta = "TeamUp|Directriz|Inicio Sesion Correcto|iC";
+            respuesta = AyudanteConteston.contestarTodoBien("iC", "Inicio de sesion correcto", null);
             j.setIdUsuario(u.getId());
         }
         
@@ -153,18 +155,20 @@ public class BaseDatosManager {
         return respuesta;
     }
 
-    public String iniciarSesionToken(String selector, String token) { 
-        String respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|ertkNv";
+    public String iniciarSesionToken(String selector, String token, JugadorSistema j) { 
+        String respuesta = "";
         boolean rememberTokenExiste = comprobarTokenExiste(selector);
 
         if (!rememberTokenExiste) {
-            respuesta = "TeamUp|Directriz|Inicio Sesion Fallido|ertkNe";
-        } else if (comprobarRememberToken(selector, token))
-            respuesta = "TeamUp|Directriz|Inicio Sesion Correcto|iCcTkC";
-        
+            respuesta = AyudanteConteston.contestarError("ertkNe", "El token no existe");
+        } else if (comprobarRememberToken(selector, token)) {
+            respuesta = AyudanteConteston.contestarTodoBien("iCcTkC", "Inicio de sesión correcto", null);
+            j.setIdUsuario(obtenerRememberToken(selector).getUsuario().getId());
+        }
 
         return respuesta;
     }
+
 
     private boolean comprobarTokenExiste(String selector) {
         boolean tokenExiste = false;
@@ -188,9 +192,6 @@ public class BaseDatosManager {
         if (rm.getTokenHash().equals(hash)) {
             rememberValido = true;
         }
-
-
-
 
         return rememberValido;
     }
@@ -237,15 +238,15 @@ public class BaseDatosManager {
         try (Session session = sessionFactory.openSession()) {
         // Esto lo podriamos llevar a una funcion que deolviera un objeto que estuviera fomrado por UN boolean false / true y el mensaje, la verdad seria bueno y ayudaria al codigo pero mas adelante
             if (usuarioExiste) {
-                resultado = "TeamUp|Directriz|Registro Fallido|errU";
+                resultado = AyudanteConteston.contestarError("errU", "Usuario ya existe");
             } else if (correoExiste){
-                resultado = "TeamUp|Directriz|Registro Fallido|errC";
+                resultado = AyudanteConteston.contestarError("errC", "Correo ya existe");
             } else if (!validarNombreUsuario(nombre)) {
-                resultado = "TeamUp|Directriz|Registro Fallido|errUu";
+                resultado = AyudanteConteston.contestarError("errUu", "Nombre del usuario no cumple los requisitos");
             } else if (!validarCorreo(correo)) {
-                resultado = "TeamUp|Directriz|Registro Fallido|errCc";
+                resultado = AyudanteConteston.contestarError("errCc", "El correo no cumple el formato de correo");
             } else if (!validarContrasenia(contrasenia)) {
-                resultado = "TeamUp|Directriz|Registro Fallido|errCo";
+                resultado = AyudanteConteston.contestarError("errCo", "La contraseña no cumple los minimos de seguridad");
             } else {
                 String contraseniaEncriptada  = encriptarContrasenia(contrasenia);
                 Usuario u = new Usuario(nombre, correo, contraseniaEncriptada, posicion1, posicion2);
@@ -263,10 +264,14 @@ public class BaseDatosManager {
                 }
 
                 if (recordarme.equals("1")) {
+                    Map<String,Object> datos = new HashMap<>();
                     List<String> lista = generarRememberToken(u, j);
+                    datos.put("selector", lista.get(0));
+                    datos.put("token", lista.get(1));
                     resultado = "TeamUp|Directriz|Registro Completo|rCºtoken:" + lista.get(0) + ":" + lista.get(1);
+                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro completo", datos);
                 } else {
-                    resultado = "TeamUp|Directriz|Registro Completo|rC";
+                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro Completo", null);
                 }
             }
         }

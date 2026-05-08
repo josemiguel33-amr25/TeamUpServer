@@ -66,12 +66,11 @@ public class SistemaDeJuego {
             System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (iniciar sesion) con " + mapaDatos.get("correo"));
             
             if (mapaDatos.get("remember").equals("si")) {
-                respuesta = sv.getBaseDatosManager().iniciarSesionToken(mapaDatos.get("selector"), mapaDatos.get("token"));
+                respuesta = sv.getBaseDatosManager().iniciarSesionToken(mapaDatos.get("selector"), mapaDatos.get("token"), j);
             } else if (mapaDatos.get("remember").equals("no")) {
                 respuesta = sv.getBaseDatosManager().iniciarSesionContrasenia(mapaDatos.get("correo"), mapaDatos.get("contrasenia"), j);
             }
 
-            String [] comprobacionRespuesta = respuesta.split("\\|");
 
             if (j.getIdUsuario() != -33) 
                 jugadores.add(j);
@@ -88,7 +87,7 @@ public class SistemaDeJuego {
 
 
         respuesta = sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"),mapaDatos.get("recordarme"), j);
-        String [] comprobacionRespuesta = respuesta.split("\\|");
+
 
         if (j.getIdUsuario() != -33) {
             System.out.println("TeamUp|MensajeInterno|Voy a entrar a generador de carta con: " + j.getIdUsuario());
