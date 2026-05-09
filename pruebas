@@ -57,3 +57,37 @@ Servidor: {"codigo":"Er","datos":{"rangos":
 {"puntosMin":150,"puntosMax":300,"nombreSobre":"sobrePlata","nombreRango":"Plata"},
 {"puntosMin":300,"puntosMax":450,"nombreSobre":"sobreOro","nombreRango":"Oro"},
 {"puntosMin":450,"puntosMax":600,"nombreSobre":"sobreElite","nombreRango":"Elite"}]},"mensaje":"Rangos enviados","status":"Perfecto"}
+
+
+Mando
+{"tipo":"inventarioJugador","data":{}}
+
+Recibo
+Servidor: {"codigo":"iNe","datos":{"cosmeticos":[]},"mensaje":"Inventario enviado","status":"Perfecto"}
+
+
+Mando
+{"tipo":"ranking","datos":{"rango":"1","mayorMenor":"menor"}} 
+
+
+Recibo
+
+
+ {"codigo":"rCc","datos":
+ {"jugadores":[{"nombre":"Juan","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Juan8391","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Juan3256","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Juan888","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"IlloJuan","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Miki31410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Miki410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Mi10","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Miki41440","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"BrunnoFernandes","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Judei410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahMane410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahMane","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahMane1433","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"LenaMiki","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahManeEndrick","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"FernandoAlonso3314","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0}]},"mensaje":"Ranking creado correctamente","status":"Perfecto"}

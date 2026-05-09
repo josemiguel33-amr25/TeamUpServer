@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 
 public class Servidor {
+    public static final int caracteresMaximoTitulo = 100;
 
     private ExecutorService ejecutador;
     private Properties propiedades;

@@ -18,10 +18,12 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.mindrot.jbcrypt.BCrypt;
 
+import clases.UsuarioSimplificado;
 import claseshibernate.Carta;
 import claseshibernate.Cosmetico;
 import claseshibernate.Inventario;
 import claseshibernate.InventarioCosmetico;
+import claseshibernate.Partido;
 import claseshibernate.RememberToken;
 import claseshibernate.Usuario;
 
@@ -135,6 +137,81 @@ public class BaseDatosManager {
             }
         }
         System.out.println("TeamUp|MensajeInterno|Tokens eliminados por caducados -----> " + contadorTokenExpirados);
+    }
+
+    public String obtenerListaJugadoresRango(String rango, String mayorMenor) {
+        String respuesta = "";
+
+        System.out.println("TeamUp|MensajeInterno| Entro en obtener lista de jugadores por rango con: " +rango + " y el usuario quiere filtrar por " + mayorMenor);
+        try (Session session = sessionFactory.openSession()){  
+            Query<Usuario> q;
+            if (mayorMenor.equals("mayor")) {
+                q = session.createQuery("FROM Usuario WHERE rango = :rango ORDER BY puntos DESC",Usuario.class);
+                q.setParameter("rango", rango);
+            } else {
+                q = session.createQuery("FROM Usuario WHERE rango = :rango ORDER BY puntos ASC",Usuario.class);
+                q.setParameter("rango", rango);
+            }
+
+            List<Usuario> jugadores = q.list();
+            System.out.println("TeamUp|MensajeInterno|Lista de jugadores con: " + jugadores.size() + " jugadores y el primer jugador es:  " + jugadores.get(0).getNombre());
+            List<UsuarioSimplificado> listaUsuariosSimplificada = new ArrayList<>();
+
+            for (Usuario u : jugadores) {
+                listaUsuariosSimplificada.add(new UsuarioSimplificado(u.getNombre(), rango, u.getPuntos(), u.getReputacion(), u.getGoles(), u.getAsistencias(), u.getMvps()));
+            }
+
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("jugadores", listaUsuariosSimplificada);
+            respuesta = AyudanteConteston.contestarTodoBien("rCc", "Ranking creado correctamente", datos);
+
+        }
+
+
+        return respuesta;
+    }
+
+    public String registarPartido(Map<String,String> datos, JugadorSistema j) {
+        String respuesta = "";
+        
+        try (Session session = sessionFactory.openSession()){
+            if (datos.get("titulo").length() <= Servidor.caracteresMaximoTitulo) {
+                boolean soloVerificados = true;
+                Usuario creador = obtenerUsuarioPorId(j.getIdUsuario());
+                if (datos.get("verificados").equals("no"))
+                    soloVerificados = false;
+                Partido p = new Partido(datos.get("titulo"), datos.get("ubicacion"), Integer.parseInt(datos.get("precio")), datos.get("ciudad"), creador, soloVerificados);
+                Transaction transaction = session.beginTransaction();
+                session.persist(p);
+
+                try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|Partido creado.");
+                } catch (IllegalStateException em) {
+                    System.out.println("TeamUp|Error|EM2|.");
+                }
+            } else
+                respuesta = AyudanteConteston.contestarError("erTlnv", "Titulo tiene mas de 100 caracteres");
+        
+        }
+
+
+        return respuesta;
+    }
+
+    private Usuario obtenerUsuarioPorId(int idUsuario) {
+        Usuario u = null;
+        try (Session session = sessionFactory.openSession()){
+
+            Query<Usuario> q = session.createQuery("from Usuario where id = :id", Usuario.class);
+
+            q.setParameter("id", idUsuario);
+            List<Usuario> lUsuario = q.list();
+            u = lUsuario.get(0);
+
+        }
+
+        return u;
     }
 
 
@@ -608,33 +685,8 @@ public class BaseDatosManager {
         if (BCrypt.checkpw(contrasenia, u.getContrasena())) 
             entrar = true;
 
-        
-        
-        
         return entrar;
     }
     
 
 }
-
-/*
-Session session = sessionFactory.openSession(); CREO UNA sesion cada consulta y cierro 
-Transaction tx = session.beginTransaction();
-
-try {
-    // operaciones
-    tx.commit();
-} catch (Exception e) {
-    tx.rollback();
-} finally {
-    session.close();
-}
-
-// CONSULTA PARAMETRIZADA que no la usste en el examen, que menos ahora en el proyecto ;:()
-Query<Hospital> q = session.createQuery(
-    "from Hospital where nombre = :nombre", Hospital.class);
-
-q.setParameter("nombre", nombreHospital);
- */
-
-

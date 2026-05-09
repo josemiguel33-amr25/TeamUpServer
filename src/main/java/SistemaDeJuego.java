@@ -64,13 +64,27 @@ public class SistemaDeJuego {
                         respuesta = iniciarSesion(datos, j); 
                         break;
                 case "ranking":
+                        System.out.println("TeamUp|MensajeInterno|Entro en ranking"); // desde el  cliente se seleccionara dos filtros mayor o menor y el rango 
+                        respuesta = obtenerRanking(datos.get("rango"), datos.get("mayorMenor") );
                         break;
                 case "rangos": // al entrar a ver los rangos
                         System.out.println("TeamUp|MensajeInterno|Entro en rangos");
                         respuesta = obtenerRangos();
                         break;
-                case "partidosJugados":
+                case "partidos": // el usuario entra en mis partidos, entra aqui en este case dentro de este case habra otro switch porque la primera vez mostramos todos los partidos del usuario pero el usuario puede pinchar en el partido y ver todos los participantes y quien gano el mvp y esas cosas
                         // aqui es cuando el usuario quiere ver el historial de partidos que ha jugado, pasamos los partidos que ha jugado facil, con toda la informacion de los partidos
+                        String opcionPartidos = datos.get("tipoPartido");
+                        switch (opcionPartidos) {
+                            case "primeraCarga" : // como dice el nombre la primera vez que entra el usuario a la pestaña partido si tengo tiempo me gustaria idear una manera de almacenamiento cache para el usuario, siento que no es tan dificil y que vendria perfecto, seria algo estilo view model pero en javafx
+                                //respuesta = partidosPrimeraCarga();
+                                break;
+                            case "recarga": // aqui los usuarios pueden mandar filtros que tendremos ciudad y si necesita reputacion o no
+                                //respuesta = partidosRecarga();
+                                break;
+                            case "crearPartido": // el usuario pincha crear partido y en la interfaz se le abre una ventana para crear el partid
+                                respuesta = crearPartido(datos, j);
+                                break;
+                        }
                         break;
                 case "inventarioJugador":
                         respuesta = obtenerInventarioJugador(j.getIdUsuario()); //puedo aprovechar que el JugadorSistema tiene la id del usuario del que esta registrado y que aqui solo se puede llegar si esstas registrado
@@ -83,6 +97,10 @@ public class SistemaDeJuego {
         return respuesta;
     }
 
+    public String crearPartido(Map<String,String> mapaDatos, JugadorSistema j) {
+        return sv.getBaseDatosManager().registarPartido(mapaDatos, j);
+    }
+
     public String obtenerRangos() {
         Map<String, Object> datos = new HashMap<>();
         datos.put("rangos", listaRangos);
@@ -90,6 +108,10 @@ public class SistemaDeJuego {
 
 
         return respuesta;
+    }
+
+    public String obtenerRanking(String rangoFiltro, String mayorMenor) { // rango filtro el numero del rango 1-4 y si es mayor o menor (mayor/menor)
+        return sv.getBaseDatosManager().obtenerListaJugadoresRango(rangoFiltro, mayorMenor);
     }
 
     public String obtenerInventarioJugador(int idUsuario) {

@@ -56,6 +56,8 @@ public class Usuario {
     private Cosmetico tarjetaVisita;
 
 
+    private int monedas;
+
     private int goles;
     private int asistencias;
 
@@ -82,6 +84,7 @@ public class Usuario {
         this.fotoPerfil = "default";
         this.tarjetaVisita = tarjetaVisita;
         this.titulo = titulo;
+        this.monedas = 150; //  hay que pensar  teniendo en cuenta la economia, lo minimo seria que con las monedas le diera para un sobre y le sobraran monedas y jugando un partido le de para otro sobre
     }
 
     public String getNombre() {
