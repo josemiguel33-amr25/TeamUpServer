@@ -29,6 +29,7 @@ public class AyudanteConteston {
             return mapper.writeValueAsString(respuesta);
 
         } catch (Exception e) {
+            System.out.println("TeamUp|MensajeInterno| Error en crear mensaje json por: " + e.getMessage());
             return "{\"status\":\"error\",\"codigo\":\"EM6\"}";
         }
     }

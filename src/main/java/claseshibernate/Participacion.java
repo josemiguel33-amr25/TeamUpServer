@@ -10,7 +10,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name="participacion")
-public class Participacion {
+public class Participacion { // todos los getters por si acaso
 
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
@@ -34,5 +34,79 @@ public class Participacion {
 
     public Participacion() {
         
+    }
+
+    public Participacion(Usuario usuario, Partido partido) {
+        goles = 0;
+        asistencias = 0;
+        mvp = false;
+        asistio = false;
+        puntuacion = 1;
+        this.usuario = usuario;
+        this.partido = partido;
+
+    }
+
+    public int getPuntuacion() {
+        return puntuacion;
+    }
+
+    public boolean isMvp() {
+        return mvp;
+    }
+
+    public boolean isAsistio() {
+        return asistio;
+    }
+
+    public String getEquipo() {
+        return equipo;
+    }
+
+    public int getGoles() {
+        return goles;
+    }
+
+    public int getAsistencias() {
+        return asistencias;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public Partido getPartido() {
+        return partido;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((usuario == null) ? 0 : usuario.hashCode());
+        result = prime * result + ((partido == null) ? 0 : partido.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Participacion other = (Participacion) obj;
+        if (usuario == null) {
+            if (other.usuario != null)
+                return false;
+        } else if (!usuario.equals(other.usuario))
+            return false;
+        if (partido == null) {
+            if (other.partido != null)
+                return false;
+        } else if (!partido.equals(other.partido))
+            return false;
+        return true;
     }
 }

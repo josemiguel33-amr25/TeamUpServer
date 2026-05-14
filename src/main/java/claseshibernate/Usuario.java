@@ -158,4 +158,8 @@ public class Usuario {
     public int getMvps() {
         return mvps;
     }
+
+    public boolean isVerificado() {
+        return verificado;
+    }
 }

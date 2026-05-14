@@ -18,11 +18,13 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.mindrot.jbcrypt.BCrypt;
 
+import clases.PartidoSimplificado;
 import clases.UsuarioSimplificado;
 import claseshibernate.Carta;
 import claseshibernate.Cosmetico;
 import claseshibernate.Inventario;
 import claseshibernate.InventarioCosmetico;
+import claseshibernate.Participacion;
 import claseshibernate.Partido;
 import claseshibernate.RememberToken;
 import claseshibernate.Usuario;
@@ -103,6 +105,7 @@ public class BaseDatosManager {
                         transaction.commit();
                         System.out.println("TeamUp|MensajeInterno|Usuario dado de alta");
                     } catch (IllegalStateException em) {
+                        transaction.rollback();
                         System.out.println("TeamUp|Error|EM2|");
                     }
                 }
@@ -131,6 +134,7 @@ public class BaseDatosManager {
                         transaction.commit();
                         System.out.println("TeamUp|MensajeInterno|Token Eliminado.");
                     } catch (IllegalStateException em) {
+                        transaction.rollback();
                         System.out.println("TeamUp|Error|EM2|.");
                     }
                 }
@@ -158,7 +162,7 @@ public class BaseDatosManager {
             List<UsuarioSimplificado> listaUsuariosSimplificada = new ArrayList<>();
 
             for (Usuario u : jugadores) {
-                listaUsuariosSimplificada.add(new UsuarioSimplificado(u.getNombre(), rango, u.getPuntos(), u.getReputacion(), u.getGoles(), u.getAsistencias(), u.getMvps()));
+                listaUsuariosSimplificada.add(new UsuarioSimplificado(u.getNombre(), rango, u.getPuntos(), u.getReputacion(), u.getGoles(), u.getAsistencias(), u.getMvps(), u.isVerificado()));
             }
 
             Map<String, Object> datos = new HashMap<>();
@@ -180,16 +184,27 @@ public class BaseDatosManager {
                 Usuario creador = obtenerUsuarioPorId(j.getIdUsuario());
                 if (datos.get("verificados").equals("no"))
                     soloVerificados = false;
-                Partido p = new Partido(datos.get("titulo"), datos.get("ubicacion"), Integer.parseInt(datos.get("precio")), datos.get("ciudad"), creador, soloVerificados);
+                int anio = Integer.parseInt(datos.get("anio"));
+                int mes = Integer.parseInt(datos.get("mes"));
+                int dia = Integer.parseInt(datos.get("dia"));
+                int hora = Integer.parseInt(datos.get("hora"));
+                int minutos = Integer.parseInt(datos.get("minutos"));
+
+                LocalDateTime fecha = LocalDateTime.of(anio, mes, dia, hora, minutos);
+                Partido p = new Partido(datos.get("titulo"), datos.get("ubicacion"), Integer.parseInt(datos.get("precio")), datos.get("ciudad"), creador, soloVerificados, fecha);
                 Transaction transaction = session.beginTransaction();
                 session.persist(p);
-
+                respuesta = AyudanteConteston.contestarTodoBien("pCC", "Partido creado correctamente", null);
                 try {
                     transaction.commit();
                     System.out.println("TeamUp|MensajeInterno|Partido creado.");
                 } catch (IllegalStateException em) {
+                    transaction.rollback();
                     System.out.println("TeamUp|Error|EM2|.");
                 }
+
+                Participacion participacion = new Participacion(obtenerUsuarioPorId(j.getIdUsuario()), p); // hay que dar de alta al mismo creador del partido
+                persistirParticipacion(participacion);
             } else
                 respuesta = AyudanteConteston.contestarError("erTlnv", "Titulo tiene mas de 100 caracteres");
         
@@ -199,6 +214,138 @@ public class BaseDatosManager {
         return respuesta;
     }
 
+    public String obtenerPartidos(String ciudad, String soloVerificados) {
+        String respuesta = "";
+        try (Session session = sessionFactory.openSession()){
+            System.out.println("TeamUp|MensajeInterno|Has llegado a obtener partido");
+            String consulta = "FROM Partido WHERE estado = :estado";
+
+            if (soloVerificados.equals("si")) {
+                consulta = consulta + " AND soloVerificados = true";
+            }
+
+            if (!ciudad.equals("todas")) {
+                consulta = consulta + " AND ciudad = :ciudad";
+            }
+
+
+            Query<Partido> q = session.createQuery(consulta, Partido.class);
+            q.setParameter("estado", "abierto");
+            if (!ciudad.equals("todas")) {
+                q.setParameter("ciudad", ciudad);
+            }
+            List<Partido> partidos = q.list();
+            List<PartidoSimplificado> listaPartidos = new ArrayList<>();
+            for (Partido p : partidos) {     // idPartido, tituloPartido, ubicacion, precio, fecha, estado, soloVerificados, nombreUsuario, idUsuario, fotoUsuario
+                System.out.println("TeamUp|MensajeInterno| Estas en el bucle simplificador y estas simplificando el partido con titulo: " + p.getTitulo());
+                int dia = p.getFecha().getDayOfMonth();
+                int mes = p.getFecha().getMonthValue();
+                int anio = p.getFecha().getYear();
+                int hora = p.getFecha().getHour();
+                int minutos = p.getFecha().getMinute();
+                PartidoSimplificado pS = new PartidoSimplificado(p.getId(), p.getTitulo(), p.getUbicacion(), p.getPrecio(), dia, mes, anio, hora, minutos, p.getEstado(), p.isSoloVerificados(), p.getCreador().getNombre(), p.getCreador().getId(), p.getCreador().getFotoPerfil(), p.getCiudad());
+                listaPartidos.add(pS);
+            }
+
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("partidos", listaPartidos);
+            respuesta = AyudanteConteston.contestarTodoBien("pDc", "Partidos devueltos correctamente", datos);
+
+
+        }
+        return respuesta;
+    }
+
+
+    public String unirsePartido(String idUsuario, String idPartido) {
+        String respuesta = AyudanteConteston.contestarError("nPUP", "No has podido unirte al partido porque ya estas dentro del partido");
+
+
+        if (comprobarUnirsePartido(Integer.parseInt(idUsuario), Integer.parseInt(idPartido))) {
+            try (Session session = sessionFactory.openSession()){
+                Participacion p = new Participacion(obtenerUsuarioPorId(Integer.parseInt(idUsuario)), obtenerPartidoPorId(Integer.parseInt(idPartido)));
+                persistirParticipacion(p);
+                respuesta = AyudanteConteston.contestarTodoBien("jSHUC", "Jugador se ha unido correctamente", null);
+            }
+        }
+        
+        return respuesta;
+
+    }
+
+    private void persistirParticipacion(Participacion p) {
+        try (Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+                session.persist(p);
+                try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|Jugador se ha unido correctamente.");
+                } catch (IllegalStateException em) {
+                    transaction.rollback();
+                    System.out.println("TeamUp|Error|EM2|");
+                }
+            }
+    }
+
+    private List<Participacion> obtenerParticipantes(int idPartido) {
+        List<Participacion> participaciones = null;
+        try (Session session = sessionFactory.openSession()){
+            Query<Participacion> q = session.createQuery("FROM Participacion WHERE partido.id = :idPartido",Participacion.class);
+
+            q.setParameter("idPartido", idPartido);
+
+            participaciones = q.list();
+        
+        }
+
+        return participaciones;
+    }
+
+    private Partido obtenerPartidoPorId(int idPartido) {
+        Partido p = null;
+
+        try (Session session = sessionFactory.openSession()){  
+
+            Query<Partido> q = session.createQuery(
+                "FROM Partido WHERE id = :idPartido",
+                Partido.class
+            );
+
+            q.setParameter("idPartido", idPartido);
+
+            List<Partido> lista = q.list();
+
+            if (!lista.isEmpty()) {
+                p = lista.get(0);
+            }
+        }
+        return p;
+    }
+
+    private boolean comprobarUnirsePartido(int idUsuario, int idPartido) {
+        boolean sePuedeUnir = true;
+        Partido partido = obtenerPartidoPorId(idPartido);
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+        
+        List<Participacion> p = obtenerParticipantes(idPartido);
+
+        for (Participacion participante : p) {
+            if (participante.getUsuario().getId() == idUsuario) {
+                sePuedeUnir = false;
+                break;
+            }
+        }
+
+        if (partido.isSoloVerificados()) 
+            if (!u.isVerificado())
+                sePuedeUnir = false;
+
+
+
+        return sePuedeUnir;
+    }
+
+    
     private Usuario obtenerUsuarioPorId(int idUsuario) {
         Usuario u = null;
         try (Session session = sessionFactory.openSession()){
@@ -350,6 +497,7 @@ public class BaseDatosManager {
                     transaction.commit();
                     System.out.println("TeamUp|MensajeInterno|Carta Creada.");
                 } catch (IllegalStateException em) {
+                    transaction.rollback();
                     System.out.println("TeamUp|Error|EM2|.");
                 }
 
@@ -368,6 +516,7 @@ public class BaseDatosManager {
                 transaction.commit();
                 System.out.println("TeamUp|MensajeInterno|Inventario creado");
             } catch (IllegalStateException em) {
+                transaction.rollback();
                 System.out.println("TeamUp|Error|EM2|.");
             }
 
@@ -401,6 +550,7 @@ public class BaseDatosManager {
                 transaction.commit();
                 System.out.println("TeamUp|MensajeInterno|Objetos añadidos al inventario");
             } catch (IllegalStateException em) {
+                transaction.rollback();
                 System.out.println("TeamUp|Error|EM2|");
             }  
 
@@ -441,6 +591,7 @@ public class BaseDatosManager {
                     System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
                     j.setIdUsuario(u.getId());
                 } catch (IllegalStateException em) {
+                    transaction.rollback();
                     System.out.println("TeamUp|Error|EM2|.");
                 }
 
@@ -579,6 +730,7 @@ public class BaseDatosManager {
                 transaction.commit();
                 System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
             } catch (IllegalStateException em) {
+                transaction.rollback();
                 System.out.println("TeamUp|Error|EM2|");
             }
         }

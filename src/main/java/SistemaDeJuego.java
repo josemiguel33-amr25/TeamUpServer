@@ -40,10 +40,19 @@ public class SistemaDeJuego {
         listaRangos.add(new Rango(450, 600, "sobreElite", "Elite"));
     }
 
+    public String salirAplicacion(JugadorSistema j) {
+        jugadores.remove(j);
+        System.out.println("TeamUp|MensajeInterno|Jugador con id " + j.getIdUsuario() + " sale de la aplicacion");
+        j.cerrarConexion();
+        return AyudanteConteston.contestarTodoBien("jSdA", "Jugador ha salido de la aplicacion correctamente", null);
+    }
+
     public String buzon(String mensaje, JugadorSistema j) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
         String respuesta = ""; 
         System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui con " + mensaje);
-        
+        // idea podemos hacer algo para evitar que dos cuentas esten conectadas a la misma vez para evitar desincronizaciones, esto para nuestro sistema es facil porque el objeto JugadorSistema tiene la id del usuario
+        //entonces solo tenemos que crear un metodo que el usuario al salir de la aplicacion se elimine del set sincronizado y al entrar le ponemos la id pero antes de meterle en el set de jugadores comprobamos si contains j
+        // para esot hacemos  el equals en jugadorSistema por la id de usuario
         try {
             ObjectMapper mapper = new ObjectMapper();
 
@@ -51,12 +60,9 @@ public class SistemaDeJuego {
 
             String opcion = (String) mensajeMapita.get("tipo");
 
-            Map<String, String> datos = mapper.convertValue(
-                mensajeMapita.get("data"),
-                new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {}
-            );
+            Map<String, String> datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
 
-            switch (opcion) { 
+            switch (opcion) {  // podemos añadir un case que sea ver perfil de jugador y se llamara cada vez que un jugador pinche en un usuario y al final podriamos reciclar lo de ver nuestro perfil
                 case "registro":
                         respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
                         break;
@@ -74,17 +80,23 @@ public class SistemaDeJuego {
                 case "partidos": // el usuario entra en mis partidos, entra aqui en este case dentro de este case habra otro switch porque la primera vez mostramos todos los partidos del usuario pero el usuario puede pinchar en el partido y ver todos los participantes y quien gano el mvp y esas cosas
                         // aqui es cuando el usuario quiere ver el historial de partidos que ha jugado, pasamos los partidos que ha jugado facil, con toda la informacion de los partidos
                         String opcionPartidos = datos.get("tipoPartido");
+                        System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionPartidos);
                         switch (opcionPartidos) {
-                            case "primeraCarga" : // como dice el nombre la primera vez que entra el usuario a la pestaña partido si tengo tiempo me gustaria idear una manera de almacenamiento cache para el usuario, siento que no es tan dificil y que vendria perfecto, seria algo estilo view model pero en javafx
-                                //respuesta = partidosPrimeraCarga();
-                                break;
-                            case "recarga": // aqui los usuarios pueden mandar filtros que tendremos ciudad y si necesita reputacion o no
-                                //respuesta = partidosRecarga();
+                            case "verPartidos" : // opcion cambiada antes se llamaba primera carga, aqui directamente le paso tambien los filtros y si se recarga se vuelve aqui
+                                respuesta = partidosPrimeraCarga(datos.get("ciudad"), datos.get("soloverificados"));
                                 break;
                             case "crearPartido": // el usuario pincha crear partido y en la interfaz se le abre una ventana para crear el partid
                                 respuesta = crearPartido(datos, j);
                                 break;
+                            case "unirsePartido":
+                                respuesta = unirsePartido(datos.get("idUsuario"),datos.get("idPartido"));
+                                break;
+                            case "abandonarPartido": // solo se podrá abandonar el partido si quedan mas de 24 horas para el partido
+
                         }
+                        break;
+                case "salirAplicacion":
+                        salirAplicacion(j);
                         break;
                 case "inventarioJugador":
                         respuesta = obtenerInventarioJugador(j.getIdUsuario()); //puedo aprovechar que el JugadorSistema tiene la id del usuario del que esta registrado y que aqui solo se puede llegar si esstas registrado
@@ -95,6 +107,15 @@ public class SistemaDeJuego {
         }
 
         return respuesta;
+    }
+
+    public String unirsePartido(String idUsuario, String idPartido) {
+        return sv.getBaseDatosManager().unirsePartido(idUsuario, idPartido);
+    }
+
+    public String partidosPrimeraCarga(String ciudad, String soloverificados) {
+        System.out.println("TeamUp|MensajeInterno| Has entrado en partidos primera carga");
+        return sv.getBaseDatosManager().obtenerPartidos(ciudad, soloverificados);
     }
 
     public String crearPartido(Map<String,String> mapaDatos, JugadorSistema j) {
@@ -129,8 +150,12 @@ public class SistemaDeJuego {
             }
 
 
-            if (j.getIdUsuario() != -33) 
+            if (j.getIdUsuario() != -33 && !jugadores.contains(j) ) { 
                 jugadores.add(j);
+            } else {
+                j.setIdUsuario(-33);
+                respuesta = AyudanteConteston.contestarError("eJyC", "El usuario esta conectado desde otro dispositivo");
+            }
             
 
 

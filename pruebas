@@ -91,3 +91,34 @@ Recibo
  {"nombre":"LenaMiki","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
  {"nombre":"SalahManeEndrick","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
  {"nombre":"FernandoAlonso3314","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0}]},"mensaje":"Ranking creado correctamente","status":"Perfecto"}
+
+
+ mando 
+
+ {"tipo":"partidos","data":{"tipoPartido":"crearPartido","titulo":"Futbol 7 competitivo en Praga","ubicacion":"Football Arena Praha","precio":"8","ciudad":"Praga","verificados":"si","anio":"2026","mes":"6","dia":"14","hora":"21","minutos":"00"}}
+
+
+ recibo
+
+ Servidor: {"codigo":"pCC","mensaje":"Partido creado correctamente","status":"Perfecto"}
+
+
+
+Mando
+ {"tipo":"partidos","data":{"tipoPartido":"verPartidos"}}
+
+
+ recibo
+ Servidor: {"codigo":"pDc","datos":{"partidos":[{"idPartido":1,"tituloPartido":"Futbol 7 competitivo en Prague 20:00","ubicacion":"Sport Centrum Praha","precio":5.0,"dia":10,"mes":5,"anio":2026,"hora":13,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"SalahMane","idUsuario":15,"fotoUsuario":"default.png"},{"idPartido":3,"tituloPartido":"Futbol 7 competitivo en Praga","ubicacion":"Football Arena Praha","precio":8.0,"dia":14,"mes":6,"anio":2026,"hora":21,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"SalahMane410","idUsuario":14,"fotoUsuario":"default.png"}]},"mensaje":"Partidos devueltos correctamente","status":"Perfecto"}
+
+
+mando 
+
+{"tipo":"partidos","data":{"tipoPartido":"verPartidos","ciudad":"Praga","soloverificados":"no"}} 
+
+
+ Servidor: {"codigo":"pDc","datos":{"partidos":[{"idPartido":3,"tituloPartido":"Futbol 7 competitivo en Praga","ubicacion":"Football Arena Praha","precio":8.0,"dia":14,"mes":6,"anio":2026,"hora":21,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"SalahMane410","idUsuario":14,"fotoUsuario":"default.png"}]},"mensaje":"Partidos devueltos correctamente","status":"Perfecto"}
+
+ Mando
+ {"tipo":"partidos","data":{"tipoPartido":"unirsePartido","idUsuario":"15","idPartido":"5"}}
+ 

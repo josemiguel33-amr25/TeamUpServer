@@ -8,8 +8,9 @@ public class UsuarioSimplificado { // clase para simplificar el usuario de hiber
     private int goles;
     private int asistencias;
     private int mvps;
+    private boolean verificado;
 
-    public UsuarioSimplificado(String nombre, String rango, int puntos, int reputacion, int goles, int asistencias, int mvps) {
+    public UsuarioSimplificado(String nombre, String rango, int puntos, int reputacion, int goles, int asistencias, int mvps, boolean verificado) {
         this.nombre = nombre;
         this.rango = rango;
         this.puntos = puntos;
@@ -17,6 +18,7 @@ public class UsuarioSimplificado { // clase para simplificar el usuario de hiber
         this.goles = goles;
         this.asistencias  = asistencias;
         this.mvps = mvps;
+        this.verificado = verificado;
     }
 
     public String getNombre() {

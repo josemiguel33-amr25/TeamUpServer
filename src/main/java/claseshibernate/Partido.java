@@ -38,24 +38,63 @@ public class Partido {
     @JoinColumn(name="creador_id")
     private Usuario creador;
 
+    private String estado; //estados (cancelado, abierto, terminado, lleno)
+ 
     @OneToMany(mappedBy="partido")
-    private Set<Participacion> participaciones = new HashSet<>();
+    private Set<Participacion> participaciones = new HashSet<>(); 
 
     public Partido() {
         
     }
 
-    public Partido(String titulo, String ubicacion, double precio, String ciudad, Usuario creador, boolean soloVerificados) {
+    public Partido(String titulo, String ubicacion, double precio, String ciudad, Usuario creador, boolean soloVerificados, LocalDateTime fecha) {
         this.titulo = titulo;
         this.ubicacion =ubicacion;
         this.precio = precio;
         this.ciudad = ciudad;
         this.creador = creador;
         this.soloVerificados = soloVerificados;
-        fecha = LocalDateTime.now();
+        this.fecha = fecha;
+        estado = "abierto";
     }
 
     public void aniadirJugador(Participacion participacion) {
         participaciones.add(participacion);
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public LocalDateTime getFecha() {
+        return fecha;
+    }
+
+    public boolean isSoloVerificados() {
+        return soloVerificados;
+    }
+
+    public String getUbicacion() {
+        return ubicacion;
+    }
+
+    public double getPrecio() {
+        return precio;
+    }
+
+    public String getCiudad() {
+        return ciudad;
+    }
+
+    public Usuario getCreador() {
+        return creador;
+    }
+
+    public String getEstado() {
+        return estado;
     }
 }
