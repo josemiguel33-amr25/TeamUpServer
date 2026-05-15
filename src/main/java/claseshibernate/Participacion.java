@@ -36,7 +36,7 @@ public class Participacion { // todos los getters por si acaso
         
     }
 
-    public Participacion(Usuario usuario, Partido partido) {
+    public Participacion(Usuario usuario, Partido partido, String equipo) {
         goles = 0;
         asistencias = 0;
         mvp = false;
@@ -44,6 +44,7 @@ public class Participacion { // todos los getters por si acaso
         puntuacion = 1;
         this.usuario = usuario;
         this.partido = partido;
+        this.equipo = equipo;
 
     }
 

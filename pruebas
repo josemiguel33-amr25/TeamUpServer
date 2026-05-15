@@ -121,4 +121,25 @@ mando
 
  Mando
  {"tipo":"partidos","data":{"tipoPartido":"unirsePartido","idUsuario":"15","idPartido":"5"}}
- 
+
+
+ Mando
+ {"tipo":"registro","data":{"nombre":"MikiiiRedempetion","correo":"admin@gmail.com","contrasenia":"1234@5311@M6aa","posicion1":"dc","posicion2":"mc","recordarme":"1"}}
+
+recibo
+Servidor: {"codigo":"rC","datos":{"tarjetaVisita":"tarjetaVisitaBaseComun","mvp":0,"posicion1":"dc","correo":"admin@gmail.com","posicion2":"mc","titulo":"tituloRookieComun","selector":"20Miki1421THURSDAY","partidosJugados":0,"nombre":"MikiiiRedempetion","goles":0,"asistencias":0,"token":"17Miki14202621dcjoe"},"mensaje":"Registro completo","status":"Perfecto"}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"20Miki1421THURSDAY","token":"17Miki14202621dcjoe"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"21Mich1434THURSDAY","token":"17Mich14202634dctokyo"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"22Kobe1437THURSDAY","token":"17Kobe14202637dcfantasmaavc"}}
+
+
+Mando
+{"tipo":"partidos","data":{"tipoPartido":"masInfoPartido","idPartido":"12"}}
+
+Recibo
+Servidor: {"codigo":"dDPD","datos":{"participantes":[{"nombreUsuario":"SalahMane410","idUsuario":14,"fotoUsuario":"default.png","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"MichaelJordan33","idUsuario":21,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"KobeEnLa","idUsuario":22,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"StpRevenge","idUsuario":23,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false}]},"mensaje":"Se han devuelto correctamente los datos del partido","status":"Perfecto"}
+
+

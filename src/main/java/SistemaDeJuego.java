@@ -89,10 +89,13 @@ public class SistemaDeJuego {
                                 respuesta = crearPartido(datos, j);
                                 break;
                             case "unirsePartido":
-                                respuesta = unirsePartido(datos.get("idUsuario"),datos.get("idPartido"));
+                                respuesta = unirsePartido(j.getIdUsuario(),Integer.parseInt(datos.get("idPartido")), datos.get("equipo")); // equipo solo puede ser equipo1 o equipo2
                                 break;
                             case "abandonarPartido": // solo se podrá abandonar el partido si quedan mas de 24 horas para el partido
-
+                                respuesta = abandonarPartido(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
+                                break;
+                            case "masInfoPartido":
+                                respuesta = verMasInfoPartido(Integer.parseInt(datos.get("idPartido")));
                         }
                         break;
                 case "salirAplicacion":
@@ -100,6 +103,9 @@ public class SistemaDeJuego {
                         break;
                 case "inventarioJugador":
                         respuesta = obtenerInventarioJugador(j.getIdUsuario()); //puedo aprovechar que el JugadorSistema tiene la id del usuario del que esta registrado y que aqui solo se puede llegar si esstas registrado
+                        break;
+                case "verPerfilJugador":
+                        //esto es una funcion para cuando le demos click a cualquier foto de jugador pues en la interfaz veremos el perfil y esta es la funcion que se encarga
                         break;
             }
         } catch (Exception em) {
@@ -109,8 +115,16 @@ public class SistemaDeJuego {
         return respuesta;
     }
 
-    public String unirsePartido(String idUsuario, String idPartido) {
-        return sv.getBaseDatosManager().unirsePartido(idUsuario, idPartido);
+    public String verMasInfoPartido(int idPartido) {
+        return sv.getBaseDatosManager().verMasInfoPartido(idPartido);
+    }
+
+    public String unirsePartido(int idUsuario, int idPartido, String equipo) {
+        return sv.getBaseDatosManager().unirsePartido(idUsuario, idPartido, equipo);
+    }
+
+    public String abandonarPartido(int idUsuario, int idPartido) {
+        return sv.getBaseDatosManager().abandonarPartido(idUsuario, idPartido);
     }
 
     public String partidosPrimeraCarga(String ciudad, String soloverificados) {

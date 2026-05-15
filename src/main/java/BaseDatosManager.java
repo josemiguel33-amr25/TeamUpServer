@@ -18,6 +18,7 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.mindrot.jbcrypt.BCrypt;
 
+import clases.Participante;
 import clases.PartidoSimplificado;
 import clases.UsuarioSimplificado;
 import claseshibernate.Carta;
@@ -192,24 +193,40 @@ public class BaseDatosManager {
 
                 LocalDateTime fecha = LocalDateTime.of(anio, mes, dia, hora, minutos);
                 Partido p = new Partido(datos.get("titulo"), datos.get("ubicacion"), Integer.parseInt(datos.get("precio")), datos.get("ciudad"), creador, soloVerificados, fecha);
-                Transaction transaction = session.beginTransaction();
-                session.persist(p);
-                respuesta = AyudanteConteston.contestarTodoBien("pCC", "Partido creado correctamente", null);
-                try {
-                    transaction.commit();
-                    System.out.println("TeamUp|MensajeInterno|Partido creado.");
-                } catch (IllegalStateException em) {
-                    transaction.rollback();
-                    System.out.println("TeamUp|Error|EM2|.");
-                }
-
-                Participacion participacion = new Participacion(obtenerUsuarioPorId(j.getIdUsuario()), p); // hay que dar de alta al mismo creador del partido
+                persistirPartido(p);
+                Participacion participacion = new Participacion(obtenerUsuarioPorId(j.getIdUsuario()), p, "equipo1"); // hay que dar de alta al mismo creador del partido el usuario creador siempre va a estar en el equipo1 porque realmente es indiferente en que equipo este el creador
                 persistirParticipacion(participacion);
+                respuesta = AyudanteConteston.contestarTodoBien("pCC", "El partido se ha creado correctamente", null);
             } else
                 respuesta = AyudanteConteston.contestarError("erTlnv", "Titulo tiene mas de 100 caracteres");
         
         }
 
+
+        return respuesta;
+    }
+
+    public String verMasInfoPartido(int idPartido) {
+        String respuesta = "";
+
+        try (Session session = sessionFactory.openSession()){
+
+            Query<Participacion> q = session.createQuery("FROM Participacion WHERE partido.id = :idPartido",Participacion.class);
+
+            q.setParameter("idPartido", idPartido);
+
+            List<Participacion> participantes = q.list();
+            List<Participante> listaSimplificada = new ArrayList<>();
+            Map<String,Object> datos = new HashMap<>();
+
+
+            for (Participacion p : participantes) { // nombre, idUsuario, foto, equipo, goles, asistencia, mvp
+                listaSimplificada.add(new Participante(p.getUsuario().getNombre(), p.getUsuario().getId(), p.getUsuario().getFotoPerfil(), p.getEquipo(), p.getGoles(), p.getAsistencias(), p.isMvp()));
+            }
+
+            datos.put("participantes", listaSimplificada);
+            respuesta = AyudanteConteston.contestarTodoBien("dDPD", "Se han devuelto correctamente los datos del partido", datos);
+        }
 
         return respuesta;
     }
@@ -256,21 +273,128 @@ public class BaseDatosManager {
         return respuesta;
     }
 
+    private Participacion obtenerParticipacionId(int idUsuario, int idPartido) {
+        Participacion p = null;
 
-    public String unirsePartido(String idUsuario, String idPartido) {
-        String respuesta = AyudanteConteston.contestarError("nPUP", "No has podido unirte al partido porque ya estas dentro del partido");
+        try (Session session = sessionFactory.openSession()){
+
+            Query<Participacion> q = session.createQuery("FROM Participacion " +"WHERE usuario.id = :idUsuario " +"AND partido.id = :idPartido",Participacion.class);
+
+            q.setParameter("idUsuario", idUsuario);
+            q.setParameter("idPartido", idPartido);
+
+            List<Participacion> lista = q.list();
+
+            if (!lista.isEmpty()) {
+                p = lista.get(0);
+            }
+            
+        }
 
 
-        if (comprobarUnirsePartido(Integer.parseInt(idUsuario), Integer.parseInt(idPartido))) {
+        return p;
+    }
+
+    public String abandonarPartido(int idUsuario, int idPartido) {
+        String respuesta = AyudanteConteston.contestarError("nSHPAP", "No se ha podido abanondar el partido porque quedan menos de 24 horas para que empiece");
+
+        if (comprobarAbandonarPartido(idUsuario, idPartido)) {
             try (Session session = sessionFactory.openSession()){
-                Participacion p = new Participacion(obtenerUsuarioPorId(Integer.parseInt(idUsuario)), obtenerPartidoPorId(Integer.parseInt(idPartido)));
+                Transaction transaction = session.beginTransaction();
+                Partido partido  = obtenerPartidoPorId(idPartido);
+                Participacion participacion = obtenerParticipacionId(idUsuario, idPartido);
+                session.remove(participacion);
+                
+                if (partido.getEstado().equals("lleno")) {
+                    partido.setEstado("abierto");
+                    actualizarPartido(partido);
+                }
+
+                try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|El usuario ya no forma parte de ese partido.");
+                    respuesta = AyudanteConteston.contestarTodoBien("uHAEPC", "El usuario ha abandonado el partido correctamente", null);
+                } catch (IllegalStateException em) {
+                    transaction.rollback();
+                    System.out.println("TeamUp|Error|EM2|.");
+                }
+
+            }
+        }
+
+        return respuesta;
+    }
+
+    private boolean comprobarAbandonarPartido(int idUsuario, int idPartido) {
+        boolean sePuedeAbandonar = true;
+        Partido partido = obtenerPartidoPorId(idPartido);
+        List<Participacion> p = obtenerParticipantes(idPartido);
+
+        if (partido.getFecha().isBefore(LocalDateTime.now().plusHours(24))) 
+            sePuedeAbandonar =  false;
+        
+        if (partido.getEstado().equals("terminado"))
+            sePuedeAbandonar = false;
+
+        if (!comprobarUsuarioParticipaEnPartido(idUsuario, p))
+            sePuedeAbandonar = false;
+
+        if (partido.getCreador().getId() == idUsuario)
+            sePuedeAbandonar =  false; // el creador no puede abandonar un partido que ha creado el mismo
+
+        return sePuedeAbandonar;
+    }
+
+
+    public String unirsePartido(int idUsuario, int idPartido, String equipo) {
+        String respuesta = AyudanteConteston.contestarError("nPUP", "No has podido unirte al partido porque ya estas dentro del partido o esta completo");
+
+
+        if (comprobarUnirsePartido(idUsuario, idPartido)) {
+            try (Session session = sessionFactory.openSession()){
+                Participacion p = new Participacion(obtenerUsuarioPorId(idUsuario), obtenerPartidoPorId(idPartido), equipo);
                 persistirParticipacion(p);
                 respuesta = AyudanteConteston.contestarTodoBien("jSHUC", "Jugador se ha unido correctamente", null);
+                if (obtenerParticipantes(idPartido).size() == Servidor.JUGADORES_MAXIMO) {
+                    System.out.println("TeamUp|MensajeInterno| El partido ha llegado a 14 jugadores por lo tanto pasa a estado lleno :)");
+                    Partido partido = obtenerPartidoPorId(idPartido);
+                    partido.setEstado("lleno");
+                    actualizarPartido(partido);
+                }
+
             }
         }
         
         return respuesta;
 
+    }
+
+    private void persistirPartido(Partido p) {
+        try (Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+                session.persist(p);
+                try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|Partido persistido perfectamente.");
+                } catch (IllegalStateException em) {
+                    transaction.rollback();
+                    System.out.println("TeamUp|Error|EM2|");
+                }
+        }
+    }
+
+    private void actualizarPartido(Partido p) {
+        try (Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+                session.merge(p);
+                try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|Partido persistido perfectamente.");
+                } catch (IllegalStateException em) {
+                    transaction.rollback();
+                    System.out.println("TeamUp|Error|EM2|");
+                }
+        }
     }
 
     private void persistirParticipacion(Participacion p) {
@@ -284,7 +408,7 @@ public class BaseDatosManager {
                     transaction.rollback();
                     System.out.println("TeamUp|Error|EM2|");
                 }
-            }
+        }
     }
 
     private List<Participacion> obtenerParticipantes(int idPartido) {
@@ -322,6 +446,19 @@ public class BaseDatosManager {
         return p;
     }
 
+    private boolean comprobarUsuarioParticipaEnPartido(int idUsuario, List<Participacion> p) {
+        boolean participa = false;
+
+        for (Participacion participante : p) {
+            if (participante.getUsuario().getId() == idUsuario) {
+                participa = true;
+                break;
+            }
+        }
+
+        return participa;
+    }
+
     private boolean comprobarUnirsePartido(int idUsuario, int idPartido) {
         boolean sePuedeUnir = true;
         Partido partido = obtenerPartidoPorId(idPartido);
@@ -329,17 +466,15 @@ public class BaseDatosManager {
         
         List<Participacion> p = obtenerParticipantes(idPartido);
 
-        for (Participacion participante : p) {
-            if (participante.getUsuario().getId() == idUsuario) {
-                sePuedeUnir = false;
-                break;
-            }
-        }
+        if (comprobarUsuarioParticipaEnPartido(idUsuario, p))
+            sePuedeUnir = false;
 
         if (partido.isSoloVerificados()) 
             if (!u.isVerificado())
                 sePuedeUnir = false;
 
+        if (!partido.getEstado().equals("abierto")) 
+            sePuedeUnir = false;
 
 
         return sePuedeUnir;
