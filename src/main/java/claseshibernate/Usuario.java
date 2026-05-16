@@ -162,4 +162,8 @@ public class Usuario {
     public boolean isVerificado() {
         return verificado;
     }
+
+    public int getMonedas() {
+        return monedas;
+    }
 }

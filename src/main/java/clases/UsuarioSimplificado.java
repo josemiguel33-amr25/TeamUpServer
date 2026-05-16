@@ -1,7 +1,7 @@
 package clases;
 
 public class UsuarioSimplificado { // clase para simplificar el usuario de hibernate para cuando lo tengo que pasar al cliente
-    private String nombre;
+    private String nombre; //no uso esta clase para todo
     private String rango;
     private int puntos;
     private int reputacion;

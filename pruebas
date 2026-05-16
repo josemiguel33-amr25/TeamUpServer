@@ -129,12 +129,37 @@ mando
 recibo
 Servidor: {"codigo":"rC","datos":{"tarjetaVisita":"tarjetaVisitaBaseComun","mvp":0,"posicion1":"dc","correo":"admin@gmail.com","posicion2":"mc","titulo":"tituloRookieComun","selector":"20Miki1421THURSDAY","partidosJugados":0,"nombre":"MikiiiRedempetion","goles":0,"asistencias":0,"token":"17Miki14202621dcjoe"},"mensaje":"Registro completo","status":"Perfecto"}
 
+USUARIOS
+
 {"tipo":"iniciarSesion","data":{"remember":"si","selector":"20Miki1421THURSDAY","token":"17Miki14202621dcjoe"}}
 
 {"tipo":"iniciarSesion","data":{"remember":"si","selector":"21Mich1434THURSDAY","token":"17Mich14202634dctokyo"}}
 
 {"tipo":"iniciarSesion","data":{"remember":"si","selector":"22Kobe1437THURSDAY","token":"17Kobe14202637dcfantasmaavc"}}
 
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"27ant1458SATURDAY","token":"13ant14202658dclologre"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"28fir141SATURDAY","token":"14fir1420261dccuandomevaya"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"29oxC142SATURDAY","token":"14oxC1420262dcesacruz"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"30pau143SATURDAY","token":"14pau1420263dcgraxxqjsm"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"31Mik144SATURDAY","token":"14Mik1420264dcmedialuna"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"32Que145SATURDAY","token":"14Que1420265dcjoe"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"33Ill146SATURDAY","token":"14Ill1420266dcfantasmaavc"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"34duk147SATURDAY","token":"14duk1420267dccuandomevaya"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"35Anu148SATURDAY","token":"14Anu1420268dcfantasmaavc"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"36bad149SATURDAY","token":"14bad1420269dcgraxxqjsm"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"37Jha149SATURDAY","token":"14Jha1420269dcgraxxqjsm"}}
+
+{"tipo":"registro","data":{"nombre":"SalahMane","correo":"miki1444213@gmail.com","contrasenia":"1234Mourvinidupla@","posicion1":"dc","posicion2":"por","recordarme":"0"}}
 
 Mando
 {"tipo":"partidos","data":{"tipoPartido":"masInfoPartido","idPartido":"12"}}
@@ -142,4 +167,15 @@ Mando
 Recibo
 Servidor: {"codigo":"dDPD","datos":{"participantes":[{"nombreUsuario":"SalahMane410","idUsuario":14,"fotoUsuario":"default.png","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"MichaelJordan33","idUsuario":21,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"KobeEnLa","idUsuario":22,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"StpRevenge","idUsuario":23,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false}]},"mensaje":"Se han devuelto correctamente los datos del partido","status":"Perfecto"}
 
+Mando 
+{"tipo":"verPerfilJugador","data":{"idJugador":"19"}}
 
+recibo
+Servidor: {"codigo":"iNSUC","datos":{"verificado":false,"mediaJugador":0,"reputacion":0,"tiro":76,"posicion1":"dc","cartaCosmetico":"cartaOroComun","posicion2":"por","ritmo":72,"titulo":"tituloRookieComun","reflejos":77,"partidosJugados":0,"nombre":"FernandoAlonso3314","fisico":72,"tarjetaVisita":"tarjetaVisitaBaseComun","posicionamiento":74,"correo":"viniciushactrickclasico@gmail.com","manejo":77,"asistencias":0,"mvp":0,"defensa":71,"goles":0,"saque":50,"rango":1,"regate":74,"pase":73,"mediaPortero":0,"estirada":73,"fotoperfil":"default","velocidad":77},"mensaje":"Informacion del usuario conseguida correctamente","status":"Perfecto"}
+
+Mando
+{"tipo":"partidos","data":{"tipoPartido":"verMisPartidos","estado":"abierto"}}
+
+recibo
+
+Servidor: {"codigo":"pDUC","datos":{"partidos":[{"idPartido":15,"tituloPartido":"Futbol 7 sunset competitivo","ubicacion":"Complejo Deportivo Bah?a Sur","ciudad":"Cadiz","precio":6.0,"dia":22,"mes":6,"anio":2026,"hora":20,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"MikiiiRedempetion","idUsuario":20,"fotoUsuario":"default"}]},"mensaje":"Partidos devueltos correctamente","status":"Perfecto"}

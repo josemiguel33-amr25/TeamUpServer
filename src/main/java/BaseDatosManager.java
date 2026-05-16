@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.hibernate.Session;
@@ -21,6 +22,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import clases.Participante;
 import clases.PartidoSimplificado;
 import clases.UsuarioSimplificado;
+import clases.VotacionJugador;
 import claseshibernate.Carta;
 import claseshibernate.Cosmetico;
 import claseshibernate.Inventario;
@@ -29,9 +31,16 @@ import claseshibernate.Participacion;
 import claseshibernate.Partido;
 import claseshibernate.RememberToken;
 import claseshibernate.Usuario;
+import claseshibernate.Votacion;
 
 public class BaseDatosManager {
     private SessionFactory sessionFactory;
+    private Map<Integer, Object> mapaConcurrencia = new ConcurrentHashMap<>();
+
+    private final Integer BASE_PORTER = 70;
+    private final String[] ESTADISTICAS_CAMPO = {"ritmo", "tiro","pase","regate","defensa","fisico"};
+
+
 
 
     public BaseDatosManager() {
@@ -99,16 +108,7 @@ public class BaseDatosManager {
                 if (uSel.getFechaCreacion().plusDays(14).isBefore(LocalDateTime.now())) {
                     uSel.setVerificado(true);
                     contadorUsuariosVerificados = contadorUsuariosVerificados + 1;
-                    Transaction transaction = session.beginTransaction();
-                    session.persist(uSel);
-
-                    try {
-                        transaction.commit();
-                        System.out.println("TeamUp|MensajeInterno|Usuario dado de alta");
-                    } catch (IllegalStateException em) {
-                        transaction.rollback();
-                        System.out.println("TeamUp|Error|EM2|");
-                    }
+                    actualizarObjeto(uSel);
                 }
             }
 
@@ -193,9 +193,10 @@ public class BaseDatosManager {
 
                 LocalDateTime fecha = LocalDateTime.of(anio, mes, dia, hora, minutos);
                 Partido p = new Partido(datos.get("titulo"), datos.get("ubicacion"), Integer.parseInt(datos.get("precio")), datos.get("ciudad"), creador, soloVerificados, fecha);
-                persistirPartido(p);
+                persistirObjeto(p);
+                mapaConcurrencia.put(p.getId(), p);
                 Participacion participacion = new Participacion(obtenerUsuarioPorId(j.getIdUsuario()), p, "equipo1"); // hay que dar de alta al mismo creador del partido el usuario creador siempre va a estar en el equipo1 porque realmente es indiferente en que equipo este el creador
-                persistirParticipacion(participacion);
+                persistirObjeto(participacion);
                 respuesta = AyudanteConteston.contestarTodoBien("pCC", "El partido se ha creado correctamente", null);
             } else
                 respuesta = AyudanteConteston.contestarError("erTlnv", "Titulo tiene mas de 100 caracteres");
@@ -206,13 +207,53 @@ public class BaseDatosManager {
         return respuesta;
     }
 
+    public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones) {
+        String respuesta = AyudanteConteston.contestarError("nSHPVC", "No se ha podido votar correctamente");
+        
+        synchronized (mapaConcurrencia.get(idPartido)) { // Aqui empieza la mgia de la concurrencia
+        
+            for (VotacionJugador vJ : votaciones) {
+                Votacion v = new Votacion(obtenerPartidoPorId(idPartido), obtenerUsuarioPorId(idUsuario), obtenerUsuarioPorId(vJ.getIdUsuario()), vJ.getPuntuacion(), vJ.getGoles(), vJ.getAsistencias(), vJ.isMvp()); 
+                persistirObjeto(v);
+            }
+
+            respuesta = AyudanteConteston.contestarTodoBien("sHPVC", "Se ha podido votar correctamente", null);
+
+            if (obtenerVotacionesPartido(idPartido).size() == 182) { // 182 porque en total x partido se esperan 182 votos
+                Partido p = obtenerPartidoPorId(idPartido);
+                p.setEstado("completado");
+                actualizarObjeto(p);
+                mapaConcurrencia.remove(idPartido);
+            }
+
+
+        }
+
+        return respuesta;
+    }
+
+    private List<Votacion> obtenerVotacionesPartido(int idPartido) {
+        List<Votacion> votaciones = new ArrayList<>();
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Votacion> q = session.createQuery("FROM Votacion WHERE partido.id = :idPartido",Votacion.class);
+
+            q.setParameter("idPartido", idPartido);
+
+            votaciones = q.list();
+        }
+
+        return votaciones;
+    }
+
     public String verMasInfoPartido(int idPartido) {
         String respuesta = "";
 
         try (Session session = sessionFactory.openSession()){
 
             Query<Participacion> q = session.createQuery("FROM Participacion WHERE partido.id = :idPartido",Participacion.class);
-
+            Partido partido = obtenerPartidoPorId(idPartido);
             q.setParameter("idPartido", idPartido);
 
             List<Participacion> participantes = q.list();
@@ -225,11 +266,100 @@ public class BaseDatosManager {
             }
 
             datos.put("participantes", listaSimplificada);
+            datos.put("estadoPartido", partido.getEstado());
+            datos.put("idPartido", partido.getId());
+            datos.put("creadorPartido", partido.getCreador().getId());
             respuesta = AyudanteConteston.contestarTodoBien("dDPD", "Se han devuelto correctamente los datos del partido", datos);
         }
 
         return respuesta;
     }
+
+
+    public void rellenadorMapaConcurrencia() {
+        List<Partido> partidos = obtenerPartidos();
+        //List<Cosmetico> cosmeticosMercado = obtenerCosmeticosMercado hay que hacerlo
+        for (Partido partido : partidos) 
+            mapaConcurrencia.put(partido.getId(), partido);
+
+        System.out.println("TeamUp|MensajeInterno| Numero de partidos en el mapa de concurrencia " + partidos.size());
+
+
+    }
+
+
+    private List<Partido> obtenerPartidos() {
+        List<Partido> partidos = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Partido> q = session.createQuery("FROM Partido WHERE estado = :abierto OR estado = :terminado", Partido.class );
+
+            q.setParameter("abierto", "abierto");
+            q.setParameter("terminado", "terminado");
+
+            partidos = q.list();
+        }
+
+        return partidos;
+    }
+    
+
+    public String partidoFinalizado(int idUsuario, int idPartido) {
+        String respuesta = AyudanteConteston.contestarError("nSHPTP", "No se ha podido terminar el partido porque no ha empezado");
+        Partido partido = obtenerPartidoPorId(idPartido);
+        if (LocalDateTime.now().isAfter(partido.getFecha())) {
+            partido.setEstado("terminado");
+            mapaConcurrencia.put(idPartido, partido);
+            actualizarObjeto(partido);
+            respuesta = AyudanteConteston.contestarTodoBien("pTC", "Partido terminado correctamente", null);
+        }
+        return respuesta;
+    }
+
+
+    private List<Participacion> obtenerParticipacionesUsuario(int idUsuario) {
+
+        List<Participacion> participaciones = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Participacion> q = session.createQuery("FROM Participacion WHERE usuario.id = :idUsuario",Participacion.class);
+            q.setParameter("idUsuario", idUsuario);
+
+            participaciones = q.list();
+        }
+
+        return participaciones;
+    }
+
+    public String obtenerPartidosUsuario(int idUsuario,  String estado) {
+        String respuesta = AyudanteConteston.contestarError("eDPDU", "El usuario no participa en ningun partido con ese estado");
+        List<Participacion> partidosUsuario = obtenerParticipacionesUsuario(idUsuario);
+        List<PartidoSimplificado> listaPartidos = new ArrayList<>();
+        if (!partidosUsuario.isEmpty()) {
+            for (Participacion parti : partidosUsuario) {     // idPartido, tituloPartido, ubicacion, precio, fecha, estado, soloVerificados, nombreUsuario, idUsuario, fotoUsuario
+                Partido p = parti.getPartido();
+                if (p.getEstado().equals(estado)) {    
+                    int dia = p.getFecha().getDayOfMonth();
+                    int mes = p.getFecha().getMonthValue();
+                    int anio = p.getFecha().getYear();
+                    int hora = p.getFecha().getHour();
+                    int minutos = p.getFecha().getMinute();
+                    PartidoSimplificado pS = new PartidoSimplificado(p.getId(), p.getTitulo(), p.getUbicacion(), p.getPrecio(), dia, mes, anio, hora, minutos, p.getEstado(), p.isSoloVerificados(), p.getCreador().getNombre(), p.getCreador().getId(), p.getCreador().getFotoPerfil(), p.getCiudad());
+                    listaPartidos.add(pS);
+                }
+            }
+
+            if (!listaPartidos.isEmpty()) {
+                Map<String, Object> datos = new HashMap<>();
+                datos.put("partidos", listaPartidos);
+                respuesta = AyudanteConteston.contestarTodoBien("pDUC", "Partidos devueltos correctamente", datos);
+            }
+        }
+        return respuesta;
+    }
+
 
     public String obtenerPartidos(String ciudad, String soloVerificados) {
         String respuesta = "";
@@ -298,29 +428,32 @@ public class BaseDatosManager {
     public String abandonarPartido(int idUsuario, int idPartido) {
         String respuesta = AyudanteConteston.contestarError("nSHPAP", "No se ha podido abanondar el partido porque quedan menos de 24 horas para que empiece");
 
-        if (comprobarAbandonarPartido(idUsuario, idPartido)) {
-            try (Session session = sessionFactory.openSession()){
-                Transaction transaction = session.beginTransaction();
-                Partido partido  = obtenerPartidoPorId(idPartido);
-                Participacion participacion = obtenerParticipacionId(idUsuario, idPartido);
-                session.remove(participacion);
-                
-                if (partido.getEstado().equals("lleno")) {
-                    partido.setEstado("abierto");
-                    actualizarPartido(partido);
-                }
+        synchronized (mapaConcurrencia.get(idPartido)) {
+            if (comprobarAbandonarPartido(idUsuario, idPartido)) {
+                try (Session session = sessionFactory.openSession()){
+                    Transaction transaction = session.beginTransaction();
+                    Partido partido  = obtenerPartidoPorId(idPartido);
+                    Participacion participacion = obtenerParticipacionId(idUsuario, idPartido);
+                    session.remove(participacion);
+                    
+                    if (partido.getEstado().equals("lleno")) {
+                        partido.setEstado("abierto");
+                        mapaConcurrencia.put(idPartido, partido);
+                        actualizarObjeto(partido);
+                    }
 
-                try {
-                    transaction.commit();
-                    System.out.println("TeamUp|MensajeInterno|El usuario ya no forma parte de ese partido.");
-                    respuesta = AyudanteConteston.contestarTodoBien("uHAEPC", "El usuario ha abandonado el partido correctamente", null);
-                } catch (IllegalStateException em) {
-                    transaction.rollback();
-                    System.out.println("TeamUp|Error|EM2|.");
-                }
+                    try {
+                        transaction.commit();
+                        System.out.println("TeamUp|MensajeInterno|El usuario ya no forma parte de ese partido.");
+                        respuesta = AyudanteConteston.contestarTodoBien("uHAEPC", "El usuario ha abandonado el partido correctamente", null);
+                    } catch (IllegalStateException em) {
+                        transaction.rollback();
+                        System.out.println("TeamUp|Error|EM2|.");
+                    }
 
+                }
             }
-        }
+            }
 
         return respuesta;
     }
@@ -350,18 +483,21 @@ public class BaseDatosManager {
         String respuesta = AyudanteConteston.contestarError("nPUP", "No has podido unirte al partido porque ya estas dentro del partido o esta completo");
 
 
-        if (comprobarUnirsePartido(idUsuario, idPartido)) {
-            try (Session session = sessionFactory.openSession()){
-                Participacion p = new Participacion(obtenerUsuarioPorId(idUsuario), obtenerPartidoPorId(idPartido), equipo);
-                persistirParticipacion(p);
-                respuesta = AyudanteConteston.contestarTodoBien("jSHUC", "Jugador se ha unido correctamente", null);
-                if (obtenerParticipantes(idPartido).size() == Servidor.JUGADORES_MAXIMO) {
-                    System.out.println("TeamUp|MensajeInterno| El partido ha llegado a 14 jugadores por lo tanto pasa a estado lleno :)");
-                    Partido partido = obtenerPartidoPorId(idPartido);
-                    partido.setEstado("lleno");
-                    actualizarPartido(partido);
-                }
+        synchronized (mapaConcurrencia.get(idPartido)) {
+            if (comprobarUnirsePartido(idUsuario, idPartido)) {
+                try (Session session = sessionFactory.openSession()){
+                    Participacion p = new Participacion(obtenerUsuarioPorId(idUsuario), obtenerPartidoPorId(idPartido), equipo);
+                    persistirObjeto(p);
+                    respuesta = AyudanteConteston.contestarTodoBien("jSHUC", "Jugador se ha unido correctamente", null);
+                    if (obtenerParticipantes(idPartido).size() == Servidor.JUGADORES_MAXIMO) {
+                        System.out.println("TeamUp|MensajeInterno| El partido ha llegado a 14 jugadores por lo tanto pasa a estado lleno :)");
+                        Partido partido = obtenerPartidoPorId(idPartido);
+                        partido.setEstado("lleno");
+                        mapaConcurrencia.remove(partido.getId());
+                        actualizarObjeto(partido);
+                    }
 
+                }
             }
         }
         
@@ -369,13 +505,14 @@ public class BaseDatosManager {
 
     }
 
-    private void persistirPartido(Partido p) {
+
+    private void actualizarObjeto(Object objeto) {
         try (Session session = sessionFactory.openSession()){
             Transaction transaction = session.beginTransaction();
-                session.persist(p);
+                session.merge(objeto);
                 try {
                     transaction.commit();
-                    System.out.println("TeamUp|MensajeInterno|Partido persistido perfectamente.");
+                    System.out.println("TeamUp|MensajeInterno|Objeto actualizado perfectamente.");
                 } catch (IllegalStateException em) {
                     transaction.rollback();
                     System.out.println("TeamUp|Error|EM2|");
@@ -383,33 +520,6 @@ public class BaseDatosManager {
         }
     }
 
-    private void actualizarPartido(Partido p) {
-        try (Session session = sessionFactory.openSession()){
-            Transaction transaction = session.beginTransaction();
-                session.merge(p);
-                try {
-                    transaction.commit();
-                    System.out.println("TeamUp|MensajeInterno|Partido persistido perfectamente.");
-                } catch (IllegalStateException em) {
-                    transaction.rollback();
-                    System.out.println("TeamUp|Error|EM2|");
-                }
-        }
-    }
-
-    private void persistirParticipacion(Participacion p) {
-        try (Session session = sessionFactory.openSession()){
-            Transaction transaction = session.beginTransaction();
-                session.persist(p);
-                try {
-                    transaction.commit();
-                    System.out.println("TeamUp|MensajeInterno|Jugador se ha unido correctamente.");
-                } catch (IllegalStateException em) {
-                    transaction.rollback();
-                    System.out.println("TeamUp|Error|EM2|");
-                }
-        }
-    }
 
     private List<Participacion> obtenerParticipantes(int idPartido) {
         List<Participacion> participaciones = null;
@@ -496,6 +606,11 @@ public class BaseDatosManager {
         return u;
     }
 
+    public String verPerfilJugador(int idUsuario) {
+        Map<String, Object> datos = construirUsuario(obtenerUsuarioPorId(idUsuario));
+        return AyudanteConteston.contestarTodoBien("iNSUC", "Informacion del usuario conseguida correctamente", datos);
+    }
+
 
     public String obtenerInventarioUsuario(int idUsuario) {
         String respuesta = "";
@@ -534,17 +649,7 @@ public class BaseDatosManager {
             respuesta = AyudanteConteston.contestarError("erIncin", "La contraseña introducida es incorrecta");
         else {
             Usuario u = obtenerUsuarioPorCorreo(correo);
-            Map<String,Object> datos = new HashMap<>();
-            datos.put("nombre", u.getNombre());
-            datos.put("posicion1", u.getPosicion1());
-            datos.put("posicion2", u.getPosicion2());
-            datos.put("correo", u.getCorreo());
-            datos.put("titulo", u.getTitulo().getNombre());
-            datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
-            datos.put("goles", u.getGoles());
-            datos.put("asistencias", u.getAsistencias());
-            datos.put("mvp", u.getMvps());
-            datos.put("partidosJugados", u.getPartidosJugados());
+            Map<String,Object> datos = construirUsuario(u);
             respuesta = AyudanteConteston.contestarTodoBien("iC", "Inicio de sesion correcto", datos);
             j.setIdUsuario(u.getId());
         }
@@ -561,22 +666,75 @@ public class BaseDatosManager {
             respuesta = AyudanteConteston.contestarError("ertkNe", "El token no existe");
         } else if (comprobarRememberToken(selector, token)) {
             Usuario u = obtenerRememberToken(selector).getUsuario();
-            Map<String,Object> datos = new HashMap<>();
-            datos.put("nombre", u.getNombre());
-            datos.put("posicion1", u.getPosicion1());
-            datos.put("posicion2", u.getPosicion2());
-            datos.put("correo", u.getCorreo());
-            datos.put("titulo", u.getTitulo().getNombre());
-            datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
-            datos.put("goles", u.getGoles());
-            datos.put("asistencias", u.getAsistencias());
-            datos.put("mvp", u.getMvps());
-            datos.put("partidosJugados", u.getPartidosJugados());
+            Map<String,Object> datos = construirUsuario(u);
             respuesta = AyudanteConteston.contestarTodoBien("iCcTkC", "Inicio de sesión correcto", datos);
             j.setIdUsuario(u.getId());
         }
 
         return respuesta;
+    }
+
+    private Carta obtenerCartaUsuario(int idUsuario) { //cosas importantes de este tipo de funciones, en muchas no hay comprobaciones basicamente porque no hay posibilidad real de que por ejemplo el usuario no tenga carta, ya que cuando un usuario se crea siempre se crea con la carta
+        Carta carta = null;
+
+        try (Session session = sessionFactory.openSession()){
+            Query<Carta> q = session.createQuery("FROM Carta WHERE usuario.id = :idUsuario",Carta.class);
+            q.setParameter("idUsuario", idUsuario);
+
+            List<Carta> lista = q.list();
+            carta = lista.get(0);
+        
+        }
+
+        return carta;
+    }
+
+    public Map<String,Object> construirUsuario(Usuario u) {
+        Carta carta = obtenerCartaUsuario(u.getId());
+        Map<String, Object> datos  = new HashMap<>();
+        //Usuario general
+        datos.put("nombre", u.getNombre()); 
+        datos.put("monedas", u.getMonedas()); // la moneda de la app
+        datos.put("puntosRango", u.getPuntos());  // son los puntos del rango por ejemplo estas en el rango 1 con 100 puntos y al rango 2 se llega cuando tienes 300 puntos
+        datos.put("posicion1", u.getPosicion1());
+        datos.put("posicion2", u.getPosicion2());
+        datos.put("correo", u.getCorreo());
+        datos.put("titulo", u.getTitulo().getNombre());
+        datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
+        datos.put("goles", u.getGoles());
+        datos.put("asistencias", u.getAsistencias());
+        datos.put("mvp", u.getMvps());
+        datos.put("partidosJugados", u.getPartidosJugados());
+        datos.put("reputacion", u.getReputacion()); 
+        datos.put("rango", u.getRango());
+        datos.put("verificado", u.isVerificado());
+        datos.put("fotoperfil", u.getFotoPerfil());
+
+        //Carta
+        datos.put("cartaCosmetico", carta.getCosmetico().getNombre());
+        datos.put("ritmo", carta.getRitmo());
+        datos.put("tiro", carta.getTiro());
+        datos.put("defensa", carta.getDefensa());
+        datos.put("fisico", carta.getFisico());
+        datos.put("regate", carta.getRegate());
+        datos.put("pase",carta.getPase());
+
+        //carta stats portero
+        datos.put("manejo", carta.getManejo());
+        datos.put("estirada", carta.getEstirada());
+        datos.put("saque", carta.getSaque());
+        datos.put("reflejos", carta.getReflejos());
+        datos.put("velocidad", carta.getVelocidad());
+        datos.put("posicionamiento", carta.getPosicionamiento());
+
+
+        //media de las cartas
+        datos.put("mediaJugador", carta.getMediaJugador());
+        datos.put("mediaPortero", carta.getMediaPortero());
+        
+
+        
+        return datos;
     }
 
 
@@ -625,61 +783,40 @@ public class BaseDatosManager {
 
     
     public void registrarCarta(Carta c) {
-        try (Session session = sessionFactory.openSession()){
-                Transaction transaction = session.beginTransaction();
-                session.persist(c);
-                try {
-                    transaction.commit();
-                    System.out.println("TeamUp|MensajeInterno|Carta Creada.");
-                } catch (IllegalStateException em) {
-                    transaction.rollback();
-                    System.out.println("TeamUp|Error|EM2|.");
-                }
-
-        }
+        persistirObjeto(c);
     }
 
     private void crearInventario(Usuario u) {
         System.out.println("TeamUp|MensajeInterno| Hemos entrado para crear inventario"); 
-        try (Session session = sessionFactory.openSession()) {
-            Inventario inv = new Inventario(u);
-            Transaction transaction = session.beginTransaction();
-            session.persist(inv);
+        Inventario inv = new Inventario(u);
+        persistirObjeto(inv);
+
+        // todo esto son cosmeticos default que todo usuario consigue automaticamente al crear su perfil
+        Cosmetico c1 = obtenerCosmetico(1); // carta comun 
+        Cosmetico c2 = obtenerCosmetico(2); // tarjeta visita
+        Cosmetico c3 = obtenerCosmetico(3); // titulo rookie
+        System.out.println("TeamUp|MensajeInterno| cosmetico 1 con nombre:" + c1.getNombre());
+        System.out.println("TeamUp|MensajeInterno| cosmetico 2 con nombre:" + c2.getNombre());
+        System.out.println("TeamUp|MensajeInterno| cosmetico 3 con nombre:" + c3.getNombre());
 
 
-            try {
-                transaction.commit();
-                System.out.println("TeamUp|MensajeInterno|Inventario creado");
-            } catch (IllegalStateException em) {
-                transaction.rollback();
-                System.out.println("TeamUp|Error|EM2|.");
-            }
+        InventarioCosmetico ic1 = new InventarioCosmetico(1, inv, c1);
+        InventarioCosmetico ic2 = new InventarioCosmetico(1, inv, c2);
+        InventarioCosmetico ic3 = new InventarioCosmetico(1, inv, c3);
 
-            // todo esto son cosmeticos default que todo usuario consigue automaticamente al crear su perfil
-            Cosmetico c1 = obtenerCosmetico(1); // carta comun 
-            Cosmetico c2 = obtenerCosmetico(2); // tarjeta visita
-            Cosmetico c3 = obtenerCosmetico(3); // titulo rookie
-            System.out.println("TeamUp|MensajeInterno| cosmetico 1 con nombre:" + c1.getNombre());
-            System.out.println("TeamUp|MensajeInterno| cosmetico 2 con nombre:" + c2.getNombre());
-            System.out.println("TeamUp|MensajeInterno| cosmetico 3 con nombre:" + c3.getNombre());
-
-
-            InventarioCosmetico ic1 = new InventarioCosmetico(1, inv, c1);
-            InventarioCosmetico ic2 = new InventarioCosmetico(1, inv, c2);
-            InventarioCosmetico ic3 = new InventarioCosmetico(1, inv, c3);
-
-            persistirObjeto(ic1);
-            persistirObjeto(ic2);
-            persistirObjeto(ic3);
+        persistirObjeto(ic1);
+        persistirObjeto(ic2);
+        persistirObjeto(ic3);
                   
         
-        }
+        
     }
 
     private void persistirObjeto(Object objeto) { // la verdad se me ocurro probarlo y me sorprendio que funcionará, si no esta usado mucho es que lo pense mucho mucho mas tarde para los cosmeticos por eso la mayoria de cosas no usan esta funcion
         try (Session session = sessionFactory.openSession()) {
-            session.persist(objeto);
             Transaction transaction = session.beginTransaction();
+            session.persist(objeto);
+
             
             try {
                 transaction.commit();
@@ -716,50 +853,19 @@ public class BaseDatosManager {
             } else {
                 String contraseniaEncriptada  = encriptarContrasenia(contrasenia);
                 Usuario u = new Usuario(nombre, correo, contraseniaEncriptada, posicion1, posicion2, obtenerCosmetico(2), obtenerCosmetico(3));
-                
-                Transaction transaction = session.beginTransaction();
-                session.persist(u);
-                System.out.println("TeamUp|MensajeInterno| id del usuario despues del persisit " + u.getId());
-
-                try {
-                    transaction.commit();
-                    System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
-                    j.setIdUsuario(u.getId());
-                } catch (IllegalStateException em) {
-                    transaction.rollback();
-                    System.out.println("TeamUp|Error|EM2|.");
-                }
-
+                persistirObjeto(u);
+                j.setIdUsuario(u.getId());
                 crearInventario(u);
+                generadorCarta(posicion1, posicion2, nombre);
 
                 if (recordarme.equals("1")) {
-                    Map<String,Object> datos = new HashMap<>();
+                    Map<String,Object> datos = construirUsuario(u);
                     List<String> lista = generarRememberToken(u, j);
                     datos.put("selector", lista.get(0));
                     datos.put("token", lista.get(1));
-                    datos.put("nombre", u.getNombre());
-                    datos.put("posicion1", u.getPosicion1());
-                    datos.put("posicion2", u.getPosicion2());
-                    datos.put("correo", u.getCorreo());
-                    datos.put("titulo", u.getTitulo().getNombre());
-                    datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
-                    datos.put("goles", u.getGoles());
-                    datos.put("asistencias", u.getAsistencias());
-                    datos.put("mvp", u.getMvps());
-                    datos.put("partidosJugados", u.getPartidosJugados());
                     resultado = AyudanteConteston.contestarTodoBien("rC", "Registro completo", datos);
                 } else {
-                    Map<String,Object> datos = new HashMap<>();
-                    datos.put("nombre", u.getNombre());
-                    datos.put("posicion1", u.getPosicion1());
-                    datos.put("posicion2", u.getPosicion2());
-                    datos.put("correo", u.getCorreo());
-                    datos.put("titulo", u.getTitulo().getNombre());
-                    datos.put("tarjetaVisita", u.getTarjetaVisita().getNombre());
-                    datos.put("goles", u.getGoles());
-                    datos.put("asistencias", u.getAsistencias());
-                    datos.put("mvp", u.getMvps());
-                    datos.put("partidosJugados", u.getPartidosJugados());
+                    Map<String,Object> datos = construirUsuario(u);
                     resultado = AyudanteConteston.contestarTodoBien("rC", "Registro Completo", datos); 
                 }
             }
@@ -767,6 +873,179 @@ public class BaseDatosManager {
 
 
         return resultado;
+    }
+
+
+        private void generadorCarta(String posicion1, String posicion2, String nombre) {
+        Random generador = new Random();
+        System.out.println("TeamUp|MensajeInterno|Estoy dedntro de generador de carta, buenas con usuario " + nombre);
+        Usuario usu = obtenerUsuario(nombre);
+        System.out.println("TeamUp|MensajeInterno|He obtenido el siguiente usuario: " + usu.getNombre() + " con " + usu.getId());
+        if (posicion1.equals("por") || posicion2.equals("por")) {
+            String posicionCampo = "";
+            if (!posicion1.equals("por")) {
+                posicionCampo = posicion1;
+            } else {
+                posicionCampo = posicion2;
+            }
+            
+            List<String>estadisticasCambiantes = obtenerBonus(posicionCampo);
+            Map<String, Integer> estadisticasCampo = new HashMap<>();
+            for (String estadistica : ESTADISTICAS_CAMPO) {
+                int sumaEstadistica = 70 + generador.nextInt(4)+1;
+                if (estadistica.equals(estadisticasCambiantes.get(0))) { 
+                    estadisticasCampo.put(estadistica,sumaEstadistica+5 );
+                } else if (estadistica.equals(estadisticasCambiantes.get(1))) {
+                    estadisticasCampo.put(estadistica,sumaEstadistica-3 );
+                } else {
+                    estadisticasCampo.put(estadistica, sumaEstadistica);
+                }
+            }
+            Carta c  = new Carta(estadisticasCampo.get("ritmo"), estadisticasCampo.get("tiro"), estadisticasCampo.get("pase"), estadisticasCampo.get("regate"), estadisticasCampo.get("defensa"), estadisticasCampo.get("fisico"), usu, obtenerCosmetico(1));
+            
+            c.setPosicionamiento(BASE_PORTER + generador.nextInt(8));
+            c.setReflejos(BASE_PORTER + generador.nextInt(8));
+            c.setManejo(BASE_PORTER + generador.nextInt(8));
+            c.setVelocidad(BASE_PORTER + generador.nextInt(8));
+            c.setEstirada(BASE_PORTER + generador.nextInt(8));
+            c.setSaque(BASE_PORTER + generador.nextInt(8));
+            c.setMediaPortero(c.calcularMedia(c.getEstirada(), c.getManejo(), c.getReflejos(), c.getVelocidad(), c.getSaque(), c.getPosicionamiento()));
+            System.out.println("TeamUp|MensajeInterno|Carta con estadisticas " + c.getRegate() + " regate");
+            registrarCarta(c);
+
+        } else {
+            System.out.println("TeamUp|MensajeInterno|Entramos en el else donde se crean las cartas para gente con posicion de campo no portero");
+            List<String>posiciones = new ArrayList<>();
+            posiciones.add(posicion1);
+            posiciones.add(posicion2);
+            List<String> estadisticasCambiantes = obtenerBonus(posiciones);
+            System.out.println("TeamUp|MensajeInterno|Tamanio de estadisticas cambiantes " + estadisticasCambiantes.size());
+            Map<String, Integer> estadisticasCampo = new HashMap<>();
+            for (String estadistica : ESTADISTICAS_CAMPO) {
+                int sumaEstadistica = 70 + generador.nextInt(4)+1;
+                if (estadistica.equals(estadisticasCambiantes.get(0)) || estadistica.equals(estadisticasCambiantes.get(2))) {
+                    estadisticasCampo.put(estadistica, sumaEstadistica + 5);
+                } else if (estadistica.equals(estadisticasCambiantes.get(1)) || estadistica.equals(estadisticasCambiantes.get(3))) {
+                    estadisticasCampo.put(estadistica, sumaEstadistica - 3);
+                } else {
+                    estadisticasCampo.put(estadistica, sumaEstadistica);
+                }
+            }
+            Carta c = new Carta(estadisticasCampo.get("ritmo"), estadisticasCampo.get("tiro"), estadisticasCampo.get("pase"), estadisticasCampo.get("regate"), estadisticasCampo.get("defensa"),estadisticasCampo.get("fisico"), usu, obtenerCosmetico(1));            
+
+            registrarCarta(c);
+        }
+        
+    }
+
+    private List<String> obtenerBonus(List<String> posicionesRecibidas) { //primera y tercera mejorar, segunda y cuarta empeorar
+        List<String> estadistica = new ArrayList<>();
+
+
+        for (String posicion : posicionesRecibidas) {
+            List<String> temporal = obtenerBonus(posicion);
+            estadistica.add(temporal.get(0));
+            estadistica.add(temporal.get(1));
+        }
+
+
+        return estadistica;
+    }
+
+    private List<String> obtenerBonus(String posicion) { //devolvemos dos estadisticas la primera el bonus y la segunda la que empeora es 
+        List<String> estadistica = new ArrayList<>();
+        Random generador = new Random();
+        int caraCruz = generador.nextInt(2);
+        System.out.println("TeamUp|MensajeInterno|Entramos en obtener bonus");
+
+        switch (posicion) {
+            case "dc" :
+                if (caraCruz == 0) {
+                    estadistica.add("tiro");
+                    estadistica.add("defensa");
+                } else {
+                    estadistica.add("regate");
+                    estadistica.add("pase");
+                }
+                break;
+            case "ei":
+                if (caraCruz == 0) {
+                    estadistica.add("ritmo");
+                    estadistica.add("fisico");
+                } else {
+                    estadistica.add("regate");
+                    estadistica.add("defensa");
+                }
+                break;
+            case "ed":
+                if (caraCruz == 0) {
+                    estadistica.add("regate");
+                    estadistica.add("fisico");
+                } else {
+                    estadistica.add("ritmo");
+                    estadistica.add("defensa");
+                }
+                break;
+            case "mc":
+                if (caraCruz == 0) {
+                    estadistica.add("regate");
+                    estadistica.add("tiro");
+                } else {
+                    estadistica.add("pase");
+                    estadistica.add("ritmo");
+                }
+                break;
+            case "mcd":
+                if (caraCruz == 0) {
+                    estadistica.add("defensa");
+                    estadistica.add("tiro");
+                } else {
+                    estadistica.add("pase");
+                    estadistica.add("ritmo");
+                }
+                break;
+            case "mco":
+                if (caraCruz == 0) {
+                    estadistica.add("tiro");
+                    estadistica.add("defensa");
+                } else {
+                    estadistica.add("pase");
+                    estadistica.add("fisico");
+                }
+                break;
+            case "dfc":
+                if (caraCruz == 0) {
+                    estadistica.add("defensa");
+                    estadistica.add("regate");
+                } else {
+                    estadistica.add("fisico");
+                    estadistica.add("tiro");
+                }
+                break;
+            case "li":
+                if (caraCruz == 0) {
+                    estadistica.add("ritmo");
+                    estadistica.add("fisico");
+                } else {
+                    estadistica.add("defensa");
+                    estadistica.add("tiro");
+                }
+                break;
+            case "ld":
+                if (caraCruz == 0) {
+                    estadistica.add("ritmo");
+                    estadistica.add("fisico");
+                } else {
+                    estadistica.add("defensa");
+                    estadistica.add("tiro");
+                }
+                break;
+            default:
+                throw new AssertionError();
+        }
+
+
+        return estadistica;
     }
 
 
@@ -845,9 +1124,9 @@ public class BaseDatosManager {
     private List<String> generarRememberToken(Usuario u, JugadorSistema j) { //esto devuelve una lista con selector + el token sin hashear en documenta el proceso que he segudio
         List<String> listaDatos = new ArrayList<>();
         System.out.println("TeamUp|MensajeInterno|Usario con id" + u.getId() + " con nombre " + u.getNombre());
-        String selector = u.getId() + "" + u.getNombre().substring(0,4) + "14" + u.getFechaCreacion().getMinute() + u.getFechaCreacion().getDayOfWeek();
+        String selector = u.getId() + "" + u.getNombre().substring(0,3) + "14" + u.getFechaCreacion().getMinute() + u.getFechaCreacion().getDayOfWeek();
         String cadenaExtra = cadenaAleatoria();
-        String token =  u.getFechaCreacion().getHour() + "" + u.getNombre().substring(0,4) + "14" + u.getFechaCreacion().getYear() + u.getFechaCreacion().getMinute() + u.getPosicion1() + cadenaExtra;
+        String token =  u.getFechaCreacion().getHour() + "" + u.getNombre().substring(0,3) + "14" + u.getFechaCreacion().getYear() + u.getFechaCreacion().getMinute() + u.getPosicion1() + cadenaExtra;
         listaDatos.add(selector);
         listaDatos.add(token);
         
@@ -856,19 +1135,7 @@ public class BaseDatosManager {
         String dispositivo = datosCliente.getHostName();
         System.out.println("TeamUp|MensajeInterno|Remember token con selector:  " + selector + " y para el usuario con nombre: " + u.getNombre());
         RememberToken rm = new RememberToken(u, selector,hashearToken(token),dispositivo, ip);
-
-        try (Session session = sessionFactory.openSession()){
-            Transaction transaction = session.beginTransaction();
-            session.persist(rm);
-
-            try {
-                transaction.commit();
-                System.out.println("TeamUp|MensajeInterno|Usuario dado de alta.");
-            } catch (IllegalStateException em) {
-                transaction.rollback();
-                System.out.println("TeamUp|Error|EM2|");
-            }
-        }
+        persistirObjeto(rm);
 
         //remember token, slelector, token, fecha expi, dispositivo, ip
         return listaDatos;

@@ -38,7 +38,7 @@ public class Partido {
     @JoinColumn(name="creador_id")
     private Usuario creador;
 
-    private String estado; //estados (cancelado, abierto, terminado, lleno)
+    private String estado; //estados (cancelado, abierto, terminado, lleno, completado) 
  
     @OneToMany(mappedBy="partido")
     private Set<Participacion> participaciones = new HashSet<>(); 
