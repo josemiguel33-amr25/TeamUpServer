@@ -15,11 +15,13 @@ import claseshibernate.RememberToken;
 import claseshibernate.Reporte;
 import claseshibernate.Sobre;
 import claseshibernate.Usuario;
+import claseshibernate.Votacion;
 public class HibernateUtil {
     private static SessionFactory sessionFactory ;
     static {
        Configuration configuration = new Configuration().configure();
         configuration.addAnnotatedClass(Usuario.class);
+        configuration.addAnnotatedClass(Votacion.class);
         configuration.addAnnotatedClass(Carta.class);
         configuration.addAnnotatedClass(Partido.class);
         configuration.addAnnotatedClass(Participacion.class);

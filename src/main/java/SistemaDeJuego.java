@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -57,18 +56,20 @@ public class SistemaDeJuego {
             Map<String, Object> mensajeMapita = mapper.readValue(mensaje, Map.class);
 
             String opcion = (String) mensajeMapita.get("tipo");
-
-            Map<String, String> datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+            Map<String, String> datos = null;
 
             switch (opcion) {  // podemos añadir un case que sea ver perfil de jugador y se llamara cada vez que un jugador pinche en un usuario y al final podriamos reciclar lo de ver nuestro perfil
                 case "registro":
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                         respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
                         break;
                 case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                         respuesta = iniciarSesion(datos, j); 
                         break;
                 case "ranking":
                         System.out.println("TeamUp|MensajeInterno|Entro en ranking"); // desde el  cliente se seleccionara dos filtros mayor o menor y el rango 
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                         respuesta = obtenerRanking(datos.get("rango"), datos.get("mayorMenor") );
                         break;
                 case "rangos": // al entrar a ver los rangos
@@ -77,33 +78,42 @@ public class SistemaDeJuego {
                         break;
                 case "partidos": // el usuario entra en mis partidos, entra aqui en este case dentro de este case habra otro switch porque la primera vez mostramos todos los partidos del usuario pero el usuario puede pinchar en el partido y ver todos los participantes y quien gano el mvp y esas cosas
                         // aqui es cuando el usuario quiere ver el historial de partidos que ha jugado, pasamos los partidos que ha jugado facil, con toda la informacion de los partidos
-                        String opcionPartidos = datos.get("tipoPartido");
+                        
+                        Map<String, Object> datosPartidos = mapper.convertValue(mensajeMapita.get("data"),new TypeReference<Map<String, Object>>() {});
+                        String opcionPartidos = (String) datosPartidos.get("tipoPartido");
                         System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionPartidos);
                         switch (opcionPartidos) {
                             case "verPartidos" : // opcion cambiada antes se llamaba primera carga, aqui directamente le paso tambien los filtros y si se recarga se vuelve aqui
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = partidosPrimeraCarga(datos.get("ciudad"), datos.get("soloverificados"));
                                 break;
                             case "crearPartido": // el usuario pincha crear partido y en la interfaz se le abre una ventana para crear el partid
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = crearPartido(datos, j);
                                 break;
                             case "unirsePartido":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = unirsePartido(j.getIdUsuario(),Integer.parseInt(datos.get("idPartido")), datos.get("equipo")); // equipo solo puede ser equipo1 o equipo2
                                 break;
                             case "abandonarPartido": // solo se podrá abandonar el partido si quedan mas de 24 horas para el partido
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = abandonarPartido(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
                                 break;
                             case "masInfoPartido":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = verMasInfoPartido(Integer.parseInt(datos.get("idPartido")));
                                 break;
                             case "verMisPartidos":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = verMisPartidos(j.getIdUsuario(), datos.get("estado")); // para que el usuario pueda filtrar por estado (abierto o terminado)
                                 break;
                             case "pasarPartidoFinalizado":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = partidoFinalizado(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
                                 break;
                             case "votarJugadores": // el usuario vota punto a cada jugador, el creador envia goles y asistencias de cada uno y al mvp 
-                                List<VotacionJugador> votaciones = mapper.convertValue(((Map<String,Object>) mensajeMapita.get("data")).get("votaciones"),new TypeReference<List<VotacionJugador>>() {});
-                                respuesta = votarJugadores(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")), votaciones);
+                                List<VotacionJugador> votaciones = mapper.convertValue(datosPartidos.get("votaciones"),new com.fasterxml.jackson.core.type.TypeReference<List<VotacionJugador>>() {});
+                                respuesta = votarJugadores(j.getIdUsuario(), Integer.parseInt((String) datosPartidos.get("idPartido")), votaciones);
                                 break; // el codigo de respuesta si ha votado correctamente inmediatmente se deshabilitara el boton de votar en ese partido
                         }
                         break;
@@ -115,9 +125,11 @@ public class SistemaDeJuego {
                         break;
                 case "verPerfilJugador":
                         //esto es una funcion para cuando le demos click a cualquier foto de jugador pues en la interfaz veremos el perfil y esta es la funcion que se encarga
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                         respuesta = verMasInfoUsuario(Integer.parseInt(datos.get("idJugador")));
                         break;
                 case "cosmeticos": // esto va a ser la funcion como partidos pero para todo lo relacionado con cosmeticos abrir sobres, vender cosas en el mercado, ver mercado etc
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                         String opcionCosmeticos = datos.get("tipoCosmeticos");
                         System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionCosmeticos);
                         switch (opcionCosmeticos) {

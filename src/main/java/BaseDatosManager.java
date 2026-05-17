@@ -306,11 +306,10 @@ public class BaseDatosManager {
     
 
     public String partidoFinalizado(int idUsuario, int idPartido) {
-        String respuesta = AyudanteConteston.contestarError("nSHPTP", "No se ha podido terminar el partido porque no ha empezado");
+        String respuesta = AyudanteConteston.contestarError("nSHPTP", "No se ha podido terminar el partido porque no ha empezado o no eres el creador");
         Partido partido = obtenerPartidoPorId(idPartido);
-        if (LocalDateTime.now().isAfter(partido.getFecha())) {
+        if (LocalDateTime.now().isAfter(partido.getFecha())) { // cambiado solo con el ! para
             partido.setEstado("terminado");
-            mapaConcurrencia.put(idPartido, partido);
             actualizarObjeto(partido);
             respuesta = AyudanteConteston.contestarTodoBien("pTC", "Partido terminado correctamente", null);
         }
@@ -493,7 +492,6 @@ public class BaseDatosManager {
                         System.out.println("TeamUp|MensajeInterno| El partido ha llegado a 14 jugadores por lo tanto pasa a estado lleno :)");
                         Partido partido = obtenerPartidoPorId(idPartido);
                         partido.setEstado("lleno");
-                        mapaConcurrencia.remove(partido.getId());
                         actualizarObjeto(partido);
                     }
 
@@ -693,7 +691,8 @@ public class BaseDatosManager {
         Carta carta = obtenerCartaUsuario(u.getId());
         Map<String, Object> datos  = new HashMap<>();
         //Usuario general
-        datos.put("nombre", u.getNombre()); 
+        datos.put("nombre", u.getNombre());
+        datos.put("idUsuario", u.getId()); 
         datos.put("monedas", u.getMonedas()); // la moneda de la app
         datos.put("puntosRango", u.getPuntos());  // son los puntos del rango por ejemplo estas en el rango 1 con 100 puntos y al rango 2 se llega cuando tienes 300 puntos
         datos.put("posicion1", u.getPosicion1());
