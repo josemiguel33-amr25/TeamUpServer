@@ -27,9 +27,11 @@ import claseshibernate.Carta;
 import claseshibernate.Cosmetico;
 import claseshibernate.Inventario;
 import claseshibernate.InventarioCosmetico;
+import claseshibernate.InventarioSobre;
 import claseshibernate.Participacion;
 import claseshibernate.Partido;
 import claseshibernate.RememberToken;
+import claseshibernate.Sobre;
 import claseshibernate.Usuario;
 import claseshibernate.Votacion;
 
@@ -80,6 +82,8 @@ public class BaseDatosManager {
 
         return usuarioExiste;
     }
+
+
 
     
 
@@ -207,29 +211,319 @@ public class BaseDatosManager {
         return respuesta;
     }
 
-    public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones) {
+    public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones, String equipoGanador) {
         String respuesta = AyudanteConteston.contestarError("nSHPVC", "No se ha podido votar correctamente");
-        
+        Partido partidoObjeto = obtenerPartidoPorId(idPartido);
         synchronized (mapaConcurrencia.get(idPartido)) { // Aqui empieza la mgia de la concurrencia
-        
             for (VotacionJugador vJ : votaciones) {
+                Participacion participacion = obtenerParticipacionId(vJ.getIdUsuario(), idPartido);
                 Votacion v = new Votacion(obtenerPartidoPorId(idPartido), obtenerUsuarioPorId(idUsuario), obtenerUsuarioPorId(vJ.getIdUsuario()), vJ.getPuntuacion(), vJ.getGoles(), vJ.getAsistencias(), vJ.isMvp()); 
                 persistirObjeto(v);
+                if (partidoObjeto.getCreador().getId() == idUsuario) { // aqui solo entra una vez porque el creador solo puede votar a un mvp
+                    if (v.isMvp()) {
+                        partidoObjeto.setMvp(v.getVotado());
+                        actualizarObjeto(partidoObjeto);
+                        Usuario u = obtenerUsuarioPorId(vJ.getIdUsuario());
+                        u.setMvps(u.getMvps()  + 1);
+                        participacion.setMvp(true);
+                        actualizarObjeto(u);
+                    }
+                    participacion.setGoles(v.getGoles());
+                    participacion.setAsistencias(v.getAsistencias());
+                    Usuario u = obtenerUsuarioPorId(vJ.getIdUsuario());
+                    u.setGoles(u.getGoles() + v.getGoles());
+                    u.setAsistencias(u.getAsistencias() + v.getAsistencias());
+                    actualizarObjeto(u);
+                    actualizarObjeto(participacion);
+                    
+                }
+            }
+            
+            if (!equipoGanador.equals("-33")) {
+                partidoObjeto.setEquipoGanador(equipoGanador);
+                actualizarObjeto(partidoObjeto);
             }
 
             respuesta = AyudanteConteston.contestarTodoBien("sHPVC", "Se ha podido votar correctamente", null);
 
-            if (obtenerVotacionesPartido(idPartido).size() == 182) { // 182 porque en total x partido se esperan 182 votos
+            if (obtenerVotacionesPartido(idPartido).size() == 183) { // 183 porque en total x partido se esperan 183 votos, el creador vota a si mismo porque tendria que poner sus goles y asistencias o si es el mvp, pero no se podra votar su puntuacion
                 Partido p = obtenerPartidoPorId(idPartido);
+                actualizarMediaEquipos(idPartido);
                 p.setEstado("completado");
                 actualizarObjeto(p);
                 mapaConcurrencia.remove(idPartido);
+                limpiadorVotos(idPartido);
             }
-
-
         }
 
         return respuesta;
+    }
+
+    private void limpiadorVotos(int idPartido) { //funcion que se encarga de limpiar todos los votos de la base de datos
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+
+            Query q = session.createQuery("DELETE FROM Votacion WHERE partido.id = :idPartido" );
+            q.setParameter("idPartido", idPartido);
+
+            int votosEliminados = q.executeUpdate();
+
+            try {
+                transaction.commit();
+
+                System.out.println("TeamUp|MensajeInterno|Votos eliminados: "   + votosEliminados );
+
+            } catch (IllegalStateException em) {
+                transaction.rollback();
+                System.out.println("TeamUp|Error|EM2|");
+            }
+        }
+
+    }
+
+    
+
+    public String recogerRecompensas(int idUsuario, int idPartido) { // recoger recompensa solo se desbloquea en la interfaz cuando el estado es completado ( el del partido)
+        String respuesta = AyudanteConteston.contestarError("rEC", "Las recompensas ya han sido recogidas");
+        Partido p = obtenerPartidoPorId(idPartido);
+        Participacion participacion = obtenerParticipacionId(idUsuario, idPartido);
+        Carta c = obtenerCartaUsuario(idUsuario);
+        String posicionPredilecta = obtenerUsuarioPorId(idUsuario).obtenerPosicionPredilecta();
+        if (!participacion.isRecompensasRecogidas()) {
+            //recompensa para el mvp
+            if (p.getMvp().getId() == idUsuario) {
+                darSobre(idUsuario, obtenerSobre("Sobre MVP"), 1);
+                darMonedas(idUsuario, 300);
+                darPuntosRango(idUsuario, 50);
+                c.mejorarEstadistica(obtenerBonus(posicionPredilecta).get(0), 2);
+                c.subidaTodasEstadisticas(1);
+            }
+
+            //recompensa para todos los usuarios
+
+            Usuario u = obtenerUsuarioPorId(idUsuario);
+            u.setPartidosJugados(u.getPartidosJugados() + 1);
+            actualizarObjeto(u);
+            if (!u.esPortero()) { 
+                c.mejorarEstadistica(obtenerBonus(u.getPosicion1()).get(0), 1);
+                c.mejorarEstadistica(obtenerBonus(u.getPosicion2()).get(0), 1);
+            } else {
+                c.mejorarEstadistica(obtenerEstadisticaAleatoriaPortero(), 2);
+            }
+
+            if (participacion.getAsistencias() > 0) {
+                c.subirPorAsistencia();
+            } else if (participacion.getGoles() > 0) {
+                c.subirPorGol();
+            }
+
+
+            darReputacion(idUsuario, 50);
+            if (p.getEquipoGanador().equals("empate")) {
+                darPuntosRango(idUsuario, 25);
+                if (u.esPortero()) {
+                    c.mejorarEstadistica(obtenerEstadisticaAleatoriaPortero(), 2);
+                } else 
+                    c.mejorarEstadistica(obtenerEstadisticaAleatoria(), 2);
+            } else if (participacion.getEquipo().equals(p.getEquipoGanador())) {
+                darPuntosRango(idUsuario, 100);
+                darMonedas(idUsuario, 250);
+                darSobre(idUsuario, obtenerSobre("Sobre Victoria"), 1);
+                if (participacion.getEquipo().equals("equipo1")) {
+                    if (p.getMediaEquipo1() < p.getMediaEquipo2())
+                        darPuntosRango(idUsuario, 50);
+                } else {
+                    if (p.getMediaEquipo2() < p.getMediaEquipo1())
+                        darPuntosRango(idUsuario, 50);
+                }
+                if (u.esPortero()) {
+                    c.mejorarEstadistica(obtenerEstadisticaAleatoriaPortero(), 2);
+                    c.mejorarEstadistica(obtenerEstadisticaAleatoria(), 2);
+                } else {
+                    c.mejorarEstadistica(obtenerBonus(u.getPosicion1()).get(0), idPartido);
+                    c.mejorarEstadistica(obtenerBonus(u.getPosicion2()).get(0), idPartido);
+                    c.mejorarEstadistica(obtenerEstadisticaAleatoria(), 2);
+                    c.mejorarEstadistica(obtenerEstadisticaAleatoria(), 2);
+                }
+
+            }
+            participacion.setRecompensasRecogidas(true);
+            actualizarObjeto(c);
+            actualizarObjeto(participacion);
+            respuesta = AyudanteConteston.contestarTodoBien("rEC", "Recompensas entregadas correctamentes", null); // alomejor devolver en fomrato json todo lo que ha consegudio el usuario y enseñarlo en una pantalla
+        }
+
+
+        return respuesta;
+    }
+
+
+    private void darMonedas(int idUsuario, int cantidadMonedas) {
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+        u.setMonedas(u.getMonedas() + cantidadMonedas);
+        actualizarObjeto(u);
+    }
+
+    private void darPuntosRango(int idUsuario, int cantidadPuntos) {
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+        u.setPuntos(u.getPuntos() + cantidadPuntos);
+        actualizarObjeto(u);
+        comprobacionSubidaRango(idUsuario);
+    }
+
+    private void darReputacion(int idUsuario, int cantidadReputacion) {
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+        u.setReputacion(u.getReputacion() + cantidadReputacion);
+        actualizarObjeto(u);
+        comprobacionSubidaReputacion(idUsuario);
+    }
+
+    private void comprobacionSubidaReputacion(int idUsuario) { // esta funcion es para dar recompensas en base a la reputacion del jugador (lo que creo que es obvio por el nombre pero bueno)
+
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+
+        if (u.getReputacion() >= 1000 && u.getReputacion() < 2000 && u.getNivelReputacion() != 2) {
+            u.setNivelReputacion(2);
+            darMonedas(idUsuario, 1000);
+            darSobre(idUsuario, obtenerSobre("Sobre Reputacion"), 1);
+            darCosmetico(idUsuario, obtenerCosmetico(10), 1);
+        } else if (u.getReputacion() >= 2000 && u.getReputacion() < 3000 && u.getNivelReputacion() != 3) {
+            u.setNivelReputacion(3);
+            darMonedas(idUsuario, 1500);
+            darSobre(idUsuario, obtenerSobre("Sobre Reputacion"), 2);
+            darCosmetico(idUsuario, obtenerCosmetico(11), 1);
+
+        } else if (u.getReputacion() >= 3000 && u.getReputacion() < 4000 && u.getNivelReputacion() != 4) {
+            u.setNivelReputacion(4);
+            darMonedas(idUsuario, 2000);
+            darSobre(idUsuario, obtenerSobre("Sobre Reputacion"), 3);
+            darCosmetico(idUsuario, obtenerCosmetico(12), 1);
+
+
+        } else if (u.getReputacion() >= 4000 && u.getReputacion() < 6000 && u.getNivelReputacion() != 5) {
+            u.setNivelReputacion(5);
+            darMonedas(idUsuario, 3000);
+            darSobre(idUsuario, obtenerSobre("Sobre Reputacion"), 5);
+            darCosmetico(idUsuario, obtenerCosmetico(13), 1);
+        }
+        
+    }
+
+    private void darCosmetico(int idusuario, Cosmetico cosmetico, int cantidad ) {
+        System.out.println("TeamUp|MensajeInterno| Entro en dar cosmetico al usuario " + idusuario);
+        InventarioCosmetico invC = new InventarioCosmetico(cantidad, obtenerInventarioPorId(idusuario), cosmetico);
+        persistirObjeto(invC);
+    }
+
+    private void comprobacionSubidaRango(int idUsuario) {
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+
+        if (u.getPuntos() >= 150 && u.getPuntos() < 300 && u.getRango() != 2) {
+            u.setRango(2);
+            darSobre(idUsuario, obtenerSobre("Sobre Plata"), 1);
+            darMonedas(idUsuario, 300);
+
+        } else if (u.getPuntos() >= 300 && u.getPuntos() < 450 && u.getRango() != 3) {
+            u.setRango(3);
+            darSobre(idUsuario, obtenerSobre("Sobre Oro"), 1);
+            darMonedas(idUsuario, 600);
+
+        } else if (u.getPuntos() >= 450 && u.getPuntos() < 600 && u.getRango() != 4) {
+            u.setRango(4);
+            darSobre(idUsuario, obtenerSobre("Sobre Elite"), 1);
+            darMonedas(idUsuario, 1200);
+        }
+    }
+
+    private Sobre obtenerSobre (String nombreSobre) { //tonteria haberlo hecho con nombreSObre creo yo que hubiera sido mejor hacerlo por id pero es que lo hecho pensando en una funcion de moderacion que puedadar sobre por nombre y claro el moderador no va a saber el id del sobre
+        Sobre sobre = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Sobre> q = session.createQuery("FROM Sobre WHERE nombre = :nombre",Sobre.class);
+
+            q.setParameter("nombre", nombreSobre);
+
+            List<Sobre> lista = q.list();
+
+            sobre = lista.get(0);
+        }
+
+        return sobre;
+    }
+
+    private void darSobre(int idUsuario, Sobre sobre, int cantidad) {
+        System.out.println("TeamUp|MensajeInterno| Entramos a dar sobre al usuario " + idUsuario);
+        InventarioSobre invS = new InventarioSobre(obtenerInventarioPorId(idUsuario), sobre, cantidad);
+        persistirObjeto(invS);
+    }   
+
+    private Inventario obtenerInventarioPorId(int idUsuario) {
+        Inventario inv = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Inventario> q = session.createQuery("FROM Inventario WHERE usuario.id = :idUsuario",Inventario.class);
+
+            q.setParameter("idUsuario", idUsuario);
+
+            List<Inventario> lista = q.list();
+
+            inv = lista.get(0);
+
+        }
+
+
+        return inv;
+    }
+
+
+
+
+    private void actualizarMediaEquipos(int idPartido) {
+        Partido p = obtenerPartidoPorId(idPartido);
+        int mediaFinalEquipo1 = 0;
+        int mediaFinalEquipo2 = 0;
+        List<Participacion> participantes = obtenerParticipantes(idPartido);
+
+        for (Participacion participante : participantes) { // se que repito codigo pero
+            int mediaUsuario = 0;
+            Usuario u = participante.getUsuario();
+            for (Votacion v : obtenerVotaciones(idPartido, u.getId())) {
+                mediaUsuario = mediaUsuario + v.getPuntuacion();
+            }
+            mediaUsuario = mediaUsuario / 13; // 13 son los votos que recibe cada jugador
+            participante.setPuntuacion(mediaUsuario);
+            actualizarObjeto(participante);
+
+            if (participante.getEquipo().equals("equipo1")) {
+                mediaFinalEquipo1 = mediaFinalEquipo1 + u.getPuntos();
+            } else 
+                mediaFinalEquipo2 = mediaFinalEquipo2 + u.getPuntos();
+
+        }
+
+        p.setMediaEquipo1(mediaFinalEquipo1 / 7);
+
+        p.setMediaEquipo2(mediaFinalEquipo2 / 7);
+
+        actualizarObjeto(p);
+
+    }
+
+    private List<Votacion> obtenerVotaciones(int idPartido, int idUsuario ) {
+        List<Votacion> votaciones = null;
+        
+        try (Session session = sessionFactory.openSession()) {
+            Query<Votacion> q = session.createQuery("FROM Votacion " +"WHERE partido.id = :idPartido " +"AND votado.id = :idUsuario",Votacion.class);
+
+            q.setParameter("idPartido", idPartido);
+            q.setParameter("idUsuario", idUsuario);
+
+            votaciones = q.list();
+        }
+
+        return votaciones;
     }
 
     private List<Votacion> obtenerVotacionesPartido(int idPartido) {
@@ -1045,6 +1339,30 @@ public class BaseDatosManager {
 
 
         return estadistica;
+    }
+
+    private String obtenerEstadisticaAleatoriaPortero() {
+        List<String> estadisticasPortero = new ArrayList<>();
+        Random generador = new Random();
+        estadisticasPortero.add("posicionamiento");
+        estadisticasPortero.add("reflejos");
+        estadisticasPortero.add("velocidad");
+        estadisticasPortero.add("saque");
+        estadisticasPortero.add("manejo");
+        estadisticasPortero.add("estirada");
+        return estadisticasPortero.get(generador.nextInt(6));
+    }
+
+    private String obtenerEstadisticaAleatoria() {
+        List<String> estadisticasJugador = new ArrayList<>();
+        Random generador = new Random();
+        estadisticasJugador.add("tiro");
+        estadisticasJugador.add("regate");
+        estadisticasJugador.add("ritmo");
+        estadisticasJugador.add("defensa");
+        estadisticasJugador.add("pase");
+        estadisticasJugador.add("fisico");
+        return estadisticasJugador.get(generador.nextInt(6));
     }
 
 

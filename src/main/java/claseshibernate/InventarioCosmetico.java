@@ -26,6 +26,8 @@ public class InventarioCosmetico {
     @JoinColumn(name="cosmetico_id")
     private Cosmetico cosmetico;
 
+    
+
     public InventarioCosmetico() {
         
     }

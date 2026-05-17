@@ -1,5 +1,7 @@
 package claseshibernate;
 
+import java.util.Random;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -205,6 +207,78 @@ public class Carta {
     public void setMediaPortero(int mediaPortero) {
         this.mediaPortero = mediaPortero;
     }
+    // para estadisticas aleatorias tiro random consigo estadistica lo paso a esta funcion
+    public void mejorarEstadistica(String estadistica, int cantidadPuntos) {
+        if (estadistica.equals("tiro")) {
+            tiro = tiro + cantidadPuntos;
+        } else if (estadistica.equals("fisico")) {
+            fisico = fisico + cantidadPuntos;
+        } else if (estadistica.equals("regate")) {
+            regate = regate + cantidadPuntos;
+        } else if (estadistica.equals("defensa")) {
+            defensa = defensa + cantidadPuntos;
+        } else if (estadistica.equals("ritmo")) {
+            ritmo = ritmo + cantidadPuntos;
+        } else if (estadistica.equals("pase")) {
+            pase = pase + cantidadPuntos;
+        } else if (estadistica.equals("manejo")) {
+            manejo = manejo + cantidadPuntos;
+        } else if (estadistica.equals("saque")) {
+            saque = saque + cantidadPuntos;
+        } else if (estadistica.equals("velocidad")) {
+            velocidad = velocidad + cantidadPuntos;
+        } else if (estadistica.equals("estirada")) {
+            estirada = estirada + cantidadPuntos;
+        } else if (estadistica.equals("reflejos")) {
+            reflejos = reflejos + cantidadPuntos;
+        } else if (estadistica.equals("posicionamiento")) {
+            posicionamiento = posicionamiento + cantidadPuntos;
+        }
+    }
+
+    public void subidaTodasEstadisticas(int cantidadPuntos) {
+        tiro = tiro + cantidadPuntos;
+        fisico = fisico + cantidadPuntos;
+        regate = regate + cantidadPuntos;
+        defensa = defensa + cantidadPuntos;
+        ritmo = ritmo + cantidadPuntos;
+        pase = pase + cantidadPuntos;
+
+        if (usuario.esPortero()) {
+            manejo = manejo + cantidadPuntos;
+            saque = saque + cantidadPuntos;
+            velocidad = velocidad + cantidadPuntos;
+            estirada = estirada + cantidadPuntos;
+            reflejos = reflejos + cantidadPuntos;
+            posicionamiento = posicionamiento + cantidadPuntos;
+        }
+    }
+
+    public void subirPorAsistencia() { // pase o regate
+        Random generador = new Random();
+        int caraCruz = generador.nextInt(2);
+
+        if (caraCruz == 1) {
+            regate = regate + 1;
+        } else
+            pase = pase + 1;
+
+    }
+
+    public void subirPorGol() { // tiro, fisico o regate
+        Random generador = new Random();
+        int caraCruz = generador.nextInt(3);
+
+        if (caraCruz == 1) {
+            regate = regate + 1;
+        } else if (caraCruz == 0)
+            tiro = pase + 1;
+        else {
+            fisico = fisico + 1;
+        }
+
+    }
+
 
     
 }

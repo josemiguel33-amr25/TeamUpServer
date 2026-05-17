@@ -1,5 +1,6 @@
 package claseshibernate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +29,9 @@ public class Participacion { // todos los getters por si acaso
     @JoinColumn(name="usuario_id")
     private Usuario usuario;
 
+    @Column(name = "recompensas_recogidas") 
+    private boolean recompensasRecogidas;
+
     @ManyToOne
     @JoinColumn(name="partido_id")
     private Partido partido;
@@ -45,6 +49,7 @@ public class Participacion { // todos los getters por si acaso
         this.usuario = usuario;
         this.partido = partido;
         this.equipo = equipo;
+        recompensasRecogidas = false;
 
     }
 
@@ -109,5 +114,37 @@ public class Participacion { // todos los getters por si acaso
         } else if (!partido.equals(other.partido))
             return false;
         return true;
+    }
+
+    public void setPuntuacion(int puntuacion) {
+        this.puntuacion = puntuacion;
+    }
+
+    public void setMvp(boolean mvp) {
+        this.mvp = mvp;
+    }
+
+    public void setAsistio(boolean asistio) {
+        this.asistio = asistio;
+    }
+
+    public void setEquipo(String equipo) {
+        this.equipo = equipo;
+    }
+
+    public void setGoles(int goles) {
+        this.goles = goles;
+    }
+
+    public void setAsistencias(int asistencias) {
+        this.asistencias = asistencias;
+    }
+
+    public boolean isRecompensasRecogidas() {
+        return recompensasRecogidas;
+    }
+
+    public void setRecompensasRecogidas(boolean recompensasRecogidas) {
+        this.recompensasRecogidas = recompensasRecogidas;
     }
 }

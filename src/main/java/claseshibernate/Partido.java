@@ -38,6 +38,20 @@ public class Partido {
     @JoinColumn(name="creador_id")
     private Usuario creador;
 
+    @Column(name = "media_equipo1")
+    private int mediaEquipo1 = 0;
+
+    @Column(name = "media_equipo2")
+    private int mediaEquipo2 = 0;
+
+    @ManyToOne
+    @JoinColumn(name = "mvp_id")
+    private Usuario mvp;
+
+    @Column(name = "equipo_ganador")
+    private String equipoGanador = "empate"; // default empate porque es lo mas seguro arquitectonicamente hablando
+
+
     private String estado; //estados (cancelado, abierto, terminado, lleno, completado) 
  
     @OneToMany(mappedBy="partido")
@@ -100,5 +114,37 @@ public class Partido {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public int getMediaEquipo1() {
+        return mediaEquipo1;
+    }
+
+    public int getMediaEquipo2() {
+        return mediaEquipo2;
+    }
+
+    public void setMediaEquipo1(int mediaEquipo1) {
+        this.mediaEquipo1 = mediaEquipo1;
+    }
+
+    public void setMediaEquipo2(int mediaEquipo2) {
+        this.mediaEquipo2 = mediaEquipo2;
+    }
+
+    public Usuario getMvp() {
+        return mvp;
+    }
+
+    public void setMvp(Usuario mvp) {
+        this.mvp = mvp;
+    }
+
+    public void setEquipoGanador(String equipoGanador) {
+        this.equipoGanador = equipoGanador;
+    }
+
+    public String getEquipoGanador() {
+        return equipoGanador;
     }
 }

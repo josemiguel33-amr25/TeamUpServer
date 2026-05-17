@@ -1,6 +1,7 @@
 package claseshibernate;
 
 import java.time.LocalDateTime;
+import java.util.Random;
 import java.util.Set;
 
 import jakarta.persistence.Column;
@@ -55,6 +56,8 @@ public class Usuario {
     @JoinColumn(name="tarjeta_visita_id")
     private Cosmetico tarjetaVisita;
 
+    @Column(name = "nivel_reputacion")
+    private int nivelReputacion;
 
     private int monedas;
 
@@ -70,6 +73,10 @@ public class Usuario {
 
     }
 
+    public void setReputacion(int reputacion) {
+        this.reputacion = reputacion;
+    }
+
     public Usuario(String nombre, String correo, String contrasenia, String posicion1, String posicion2, Cosmetico tarjetaVisita, Cosmetico titulo) {
         this.nombre = nombre;
         this.correo = correo;
@@ -81,6 +88,7 @@ public class Usuario {
         this.verificado = false; //para simplificar el sistema de verificacio por ahora, vamos a hacer que la cuenta tenga 14 dias de antiguiedad y que haya participado minimo en un partido
         this.puntos = 0;
         this.rango = 1;
+        nivelReputacion = 1;
         this.fotoPerfil = "default";
         this.tarjetaVisita = tarjetaVisita;
         this.titulo = titulo;
@@ -166,4 +174,59 @@ public class Usuario {
     public int getMonedas() {
         return monedas;
     }
+
+    public void setPuntos(int puntos) {
+        this.puntos = puntos;
+    }
+
+    public void setRango(int rango) {
+        this.rango = rango;
+    }
+
+    public void setMonedas(int monedas) {
+        this.monedas = monedas;
+    }
+
+    public void setGoles(int goles) {
+        this.goles = goles;
+    }
+
+    public void setAsistencias(int asistencias) {
+        this.asistencias = asistencias;
+    }
+
+    public void setPartidosJugados(int partidosJugados) {
+        this.partidosJugados = partidosJugados;
+    }
+
+    public void setMvps(int mvps) {
+        this.mvps = mvps;
+    }
+
+    public int getNivelReputacion() {
+        return nivelReputacion;
+    }
+
+    public void setNivelReputacion(int nivelReputacion) {
+        this.nivelReputacion = nivelReputacion;
+    }
+
+    public boolean esPortero() {
+        boolean esPortero = false;
+        if (posicion1.equals("por") || posicion2.equals("por")) {
+            esPortero = true;
+        }
+        return esPortero;
+    }
+
+    public String obtenerPosicionPredilecta() {
+        Random generador = new Random();
+        int caraCruz = generador.nextInt(2);
+
+        if (caraCruz == 0)
+            return posicion1;
+        else
+            return posicion2;
+    }
+
 }

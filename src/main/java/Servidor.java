@@ -56,7 +56,6 @@ public class Servidor {
 
                 System.out.println("TeamUp|MensajeInterno| Iniciando relleno de mapa de concurrencia");
                 baseDatosManager.rellenadorMapaConcurrencia();
-
                 
                 System.out.println("\n\n\nTeamUp|MensajeInterno| Comprobaciones terminadas \n SERVIDOR INICIADO");
 

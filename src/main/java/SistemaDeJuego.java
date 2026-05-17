@@ -112,9 +112,14 @@ public class SistemaDeJuego {
                                 respuesta = partidoFinalizado(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
                                 break;
                             case "votarJugadores": // el usuario vota punto a cada jugador, el creador envia goles y asistencias de cada uno y al mvp 
+                                String equipoGanador = (String) datosPartidos.get("equipoGanador");
                                 List<VotacionJugador> votaciones = mapper.convertValue(datosPartidos.get("votaciones"),new com.fasterxml.jackson.core.type.TypeReference<List<VotacionJugador>>() {});
-                                respuesta = votarJugadores(j.getIdUsuario(), Integer.parseInt((String) datosPartidos.get("idPartido")), votaciones);
+                                respuesta = votarJugadores(j.getIdUsuario(), Integer.parseInt((String) datosPartidos.get("idPartido")), votaciones, equipoGanador);
                                 break; // el codigo de respuesta si ha votado correctamente inmediatmente se deshabilitara el boton de votar en ese partido
+                            case "recogerRecompensa":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = recogerRecompensa(j.getIdUsuario(), Integer.parseInt("idPartido"));
+                                break;
                         }
                         break;
                 case "salirAplicacion":
@@ -132,11 +137,11 @@ public class SistemaDeJuego {
                         datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                         String opcionCosmeticos = datos.get("tipoCosmeticos");
                         System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionCosmeticos);
-                        switch (opcionCosmeticos) {
-                            case "abrirSobre" : // opcion cambiada antes se llamaba primera carga, aqui directamente le paso tambien los filtros y si se recarga se vuelve aqui
+                        switch (opcionCosmeticos) { // diferenciamos comprar sobre lo compra y lo llama a la funcion abrir de la basedatosmanager y luego en el switch la otra funcion de abrir es para abrir un sobre que tines
+                            case "comprarSobre" : // opcion cambiada antes se llamaba primera carga, aqui directamente le paso tambien los filtros y si se recarga se vuelve aqui
                                 // recibimos id del sobre que quiere el usuario abrir, hacemos la simulacion de lo que toca devolvemos lo que ha tocado simple, se comprueba si se puede comprar
                                 break; // en esta funcion va implicito comprar si le damos a abrir se recibe tambien el precio del sobre
-                            case "verSobres":
+                            case "verSobres": // aqui para reciclar podriamos hacer que se reciba "filtro" de misSobres o sobres de la tineda
                                 //devolvemos todos los sobres disponibles con su precio id y las cosas que lo formen como foto etc nombre esta funcion se ejecuta siempre que el usuario entra en tienda
                                 break;
                             case "cosmeticosConseguidos": // usuario entra en esta funcion en cuanto le da a guardar en o recoger todo no se como le llamare a esta funcion, pero el usuario entra cuando ha abierto el sobre, esto es para recoger todo 
@@ -146,11 +151,16 @@ public class SistemaDeJuego {
                             case "comprarArticulo": // se recibe la id del articulo en mercado, y la id del usuario directamente aqui comprobamos si el usuario tiene monedas suficinetes y si tiene lo compra, desaparece del mercado y se pasa al inventario del usuario
                                 break;
                             case "venderArticulo": // se recibe id del usuario y id del aarticulo del inventario y el precio, se comprueba si se puede vender el articulo y si se puede lo pone en venta (se añade al mercado y se quita del inventario del usuario)
-                                break;
+                                break; // importante hay que comprobar que el articulo que quiera vender no lo tenga equipado o lo cambiamos por otro articulo del invetario, porque siempre va atenerl os basicos ya que no son vendibles, esto hazlo como te parezca
                             case "quitarArticulo": // pasamos idArticulo y idUsuario supongo y lo quitariamos y lo devolveriamos al inventario del jugador
+                                break;
+                            case "abrirSobre": // pasamos id del sobre que tenemos y obviamente como siempre la id del usuario, simulamos las posibilidades y quitamos del inventario el sobre y damos la recompensas
+                                break;
+                            case "cambiarCosmetico": // recibimos idUsuario como siempre, y el id del cosmetico, con eso podemos comprobar el tipo que es y dependiendo del tipo que sea pues lo cambiamos y ya esta
+                                break; // se puede recibir una tarjeta de visita, titulo o diseño carta // las funciones de cambiar cosmetico modularizalas para reutilizarlas
                         }   
                     break;
-            }
+            } // añadir a participacion un boolean de recompesas recogida
         } catch (Exception em) {
             System.out.println("TeamUp|Error|EM5" + em.getMessage());
         }
@@ -158,8 +168,12 @@ public class SistemaDeJuego {
         return respuesta;
     }
 
-    public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones) {
-        return sv.getBaseDatosManager().votarJugadores(idUsuario, idPartido, votaciones);
+    public String recogerRecompensa(int idUsuario, int idPartido) {
+        return recogerRecompensa(idUsuario, idPartido);
+    }
+
+    public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones, String equipoGanador) {
+        return sv.getBaseDatosManager().votarJugadores(idUsuario, idPartido, votaciones, equipoGanador);
     }
 
     public String partidoFinalizado(int idUsuario, int idPartido ) {

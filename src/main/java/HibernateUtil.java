@@ -9,6 +9,7 @@ import claseshibernate.Intercambio;
 import claseshibernate.IntercambioItem;
 import claseshibernate.Inventario;
 import claseshibernate.InventarioCosmetico;
+import claseshibernate.InventarioSobre;
 import claseshibernate.Participacion;
 import claseshibernate.Partido;
 import claseshibernate.RememberToken;
@@ -22,6 +23,7 @@ public class HibernateUtil {
        Configuration configuration = new Configuration().configure();
         configuration.addAnnotatedClass(Usuario.class);
         configuration.addAnnotatedClass(Votacion.class);
+        configuration.addAnnotatedClass(InventarioSobre.class);
         configuration.addAnnotatedClass(Carta.class);
         configuration.addAnnotatedClass(Partido.class);
         configuration.addAnnotatedClass(Participacion.class);
