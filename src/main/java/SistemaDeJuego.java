@@ -118,7 +118,7 @@ public class SistemaDeJuego {
                                 break; // el codigo de respuesta si ha votado correctamente inmediatmente se deshabilitara el boton de votar en ese partido
                             case "recogerRecompensa":
                                 datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
-                                respuesta = recogerRecompensa(j.getIdUsuario(), Integer.parseInt("idPartido"));
+                                respuesta = recogerRecompensa(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
                                 break;
                         }
                         break;
@@ -160,7 +160,7 @@ public class SistemaDeJuego {
                                 break; // se puede recibir una tarjeta de visita, titulo o diseño carta // las funciones de cambiar cosmetico modularizalas para reutilizarlas
                         }   
                     break;
-            } // añadir a participacion un boolean de recompesas recogida
+            } 
         } catch (Exception em) {
             System.out.println("TeamUp|Error|EM5" + em.getMessage());
         }
@@ -169,7 +169,7 @@ public class SistemaDeJuego {
     }
 
     public String recogerRecompensa(int idUsuario, int idPartido) {
-        return recogerRecompensa(idUsuario, idPartido);
+        return sv.getBaseDatosManager().recogerRecompensas(idUsuario, idPartido);
     }
 
     public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones, String equipoGanador) {

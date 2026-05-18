@@ -26,4 +26,16 @@ public class Sobre {
     public Sobre() {
         
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getTemporada() {
+        return temporada;
+    }
 }

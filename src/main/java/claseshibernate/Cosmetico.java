@@ -49,4 +49,8 @@ public class Cosmetico {
     public String getRareza() {
         return rareza;
     }
+
+    public boolean isVendible() {
+        return vendible;
+    }
 }

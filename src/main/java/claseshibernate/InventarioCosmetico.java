@@ -53,4 +53,8 @@ public class InventarioCosmetico {
     public Cosmetico getCosmetico() {
         return cosmetico;
     }
+
+    public void setCantidad(int cantidad) {
+        this.cantidad = cantidad;
+    }
 }

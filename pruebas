@@ -179,3 +179,68 @@ Mando
 recibo
 
 Servidor: {"codigo":"pDUC","datos":{"partidos":[{"idPartido":15,"tituloPartido":"Futbol 7 sunset competitivo","ubicacion":"Complejo Deportivo Bah?a Sur","ciudad":"Cadiz","precio":6.0,"dia":22,"mes":6,"anio":2026,"hora":20,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"MikiiiRedempetion","idUsuario":20,"fotoUsuario":"default"}]},"mensaje":"Partidos devueltos correctamente","status":"Perfecto"}
+
+
+mando 
+{"tipo":"partidos","data":{"tipoPartido":"unirsePartido","idPartido":"17","equipo":"equipo2"}} 
+
+recibo 
+Servidor: {"codigo":"pCC","mensaje":"El partido se ha creado correctamente","status":"Perfecto"}
+
+
+mando
+{"tipo":"partidos","data":{"tipoPartido":"abandonarPartido","idPartido":"17"}}
+
+
+recibo 
+Servidor: {"codigo":"uHAEPC","mensaje":"El usuario ha abandonado el partido correctamente","status":"Perfecto"}
+
+
+mando
+{"tipo":"partidos","data":{"tipoPartido":"masInfoPartido","idPartido":"17"}}
+
+
+recibo
+
+Servidor: {"codigo":"dDPD","datos":{"creadorPartido":20,"idPartido":17,"estadoPartido":"lleno","participantes":[{"nombreUsuario":"MikiiiRedempetion","idUsuario":20,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"MichaelJordan33","idUsuario":21,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"KobeEnLa","idUsuario":22,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"antonioConte","idUsuario":27,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"firmino","idUsuario":28,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"oxChamberlein","idUsuario":29,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"paulPogba33","idUsuario":30,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"MikiRedencion","idUsuario":31,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"Quevedo23","idUsuario":32,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"Illowan","idUsuario":33,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"dukirockstar","idUsuario":34,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"AnuelRHML","idUsuario":35,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"badbunny","idUsuario":36,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"Jhayco","idUsuario":37,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false}]},"mensaje":"Se han devuelto correctamente los datos del partido","status":"Perfecto"}
+
+
+Mando (no siendo creador del partido)
+{"tipo":"partidos","data":{"tipoPartido":"pasarPartidoFinalizado","idPartido":"17"}}
+
+recibo 
+Servidor: {"codigo":"nSHPTP","mensaje":"No se ha podido terminar el partido porque no ha empezado o no eres el creador","status":"error"}
+
+Mando (siendo creador)
+{"tipo":"partidos","data":{"tipoPartido":"pasarPartidoFinalizado","idPartido":"17"}}
+
+recibo
+Servidor: {"codigo":"pTC","mensaje":"Partido terminado correctamente","status":"Perfecto"}
+
+Mando (siendo creador) el creador se vota a si mismo con sus goles, aasitencias y el mvp y a los demas igual por lo tanto el creador vota 14 veces y los demas 13 (excluyendose a si mismos)
+
+{"tipo":"partidos","data":{"tipoPartido":"votarJugadores","idPartido":"17","equipoGanador":"equipo1","votaciones":[{"idUsuario":20,"puntuacion":0,"goles":1,"asistencias":1,"mvp":true},{"idUsuario":21,"puntuacion":4,"goles":0,"asistencias":1,"mvp":false},{"idUsuario":22,"puntuacion":5,"goles":2,"asistencias":0,"mvp":false},{"idUsuario":27,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":28,"puntuacion":4,"goles":1,"asistencias":0,"mvp":false},{"idUsuario":29,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":30,"puntuacion":5,"goles":1,"asistencias":2,"mvp":false},{"idUsuario":31,"puntuacion":3,"goles":1,"asistencias":0,"mvp":false},{"idUsuario":32,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":33,"puntuacion":4,"goles":1,"asistencias":1,"mvp":false},{"idUsuario":34,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":35,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":36,"puntuacion":4,"goles":1,"asistencias":0,"mvp":false},{"idUsuario":37,"puntuacion":3,"goles":0,"asistencias":1,"mvp":false}]}}
+
+recibo
+
+Servidor: {"codigo":"sHPVC","mensaje":"Se ha podido votar correctamente","status":"Perfecto"}
+
+mando (no siendo creador)
+
+{"tipo":"partidos","data":{"tipoPartido":"votarJugadores","idPartido":"17","equipoGanador":"-33","votaciones":[{"idUsuario":20,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":22,"puntuacion":5,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":27,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":28,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":29,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":30,"puntuacion":5,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":31,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":32,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":33,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":34,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":35,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":36,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":37,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false}]}}
+
+
+recibo 
+Servidor: {"codigo":"sHPVC","mensaje":"Se ha podido votar correctamente","status":"Perfecto"}
+
+Mando (no habiendo recogido recompensas)
+
+{"tipo":"partidos","data":{"tipoPartido":"recogerRecompensa","idPartido":"17"}}
+
+recibo 
+Servidor: {"codigo":"rEC","mensaje":"Recompensas entregadas correctamentes","status":"Perfecto"}
+
+Mando habiendo recogido recompensas
+
+Servidor: {"codigo":"rEC","mensaje":"Las recompensas ya han sido recogidas","status":"error"}
+

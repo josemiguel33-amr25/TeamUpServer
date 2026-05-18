@@ -19,6 +19,7 @@ import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.mindrot.jbcrypt.BCrypt;
 
+import clases.CosmeticoSimplificado;
 import clases.Participante;
 import clases.PartidoSimplificado;
 import clases.UsuarioSimplificado;
@@ -313,7 +314,9 @@ public class BaseDatosManager {
 
             if (participacion.getAsistencias() > 0) {
                 c.subirPorAsistencia();
-            } else if (participacion.getGoles() > 0) {
+            } 
+            
+            if (participacion.getGoles() > 0) {
                 c.subirPorGol();
             }
 
@@ -340,8 +343,8 @@ public class BaseDatosManager {
                     c.mejorarEstadistica(obtenerEstadisticaAleatoriaPortero(), 2);
                     c.mejorarEstadistica(obtenerEstadisticaAleatoria(), 2);
                 } else {
-                    c.mejorarEstadistica(obtenerBonus(u.getPosicion1()).get(0), idPartido);
-                    c.mejorarEstadistica(obtenerBonus(u.getPosicion2()).get(0), idPartido);
+                    c.mejorarEstadistica(obtenerBonus(u.getPosicion1()).get(0), 1);
+                    c.mejorarEstadistica(obtenerBonus(u.getPosicion2()).get(0), 1);
                     c.mejorarEstadistica(obtenerEstadisticaAleatoria(), 2);
                     c.mejorarEstadistica(obtenerEstadisticaAleatoria(), 2);
                 }
@@ -411,8 +414,36 @@ public class BaseDatosManager {
 
     private void darCosmetico(int idusuario, Cosmetico cosmetico, int cantidad ) {
         System.out.println("TeamUp|MensajeInterno| Entro en dar cosmetico al usuario " + idusuario);
-        InventarioCosmetico invC = new InventarioCosmetico(cantidad, obtenerInventarioPorId(idusuario), cosmetico);
-        persistirObjeto(invC);
+        InventarioCosmetico invCo = comprobarUsuarioTieneCosmetico(idusuario, cosmetico);
+        if (invCo != null) {
+            invCo.setCantidad(invCo.getCantidad() + cantidad);
+            actualizarObjeto(invCo);
+        } else {
+            InventarioCosmetico invC = new InventarioCosmetico(cantidad, obtenerInventarioPorId(idusuario), cosmetico);
+            persistirObjeto(invC);
+        }
+    }
+
+    private InventarioCosmetico comprobarUsuarioTieneCosmetico(int idUsuario, Cosmetico cosmetico) { // calco de la funcion de comprobarSielusuario tiene sobre
+        InventarioCosmetico invCo = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+
+            Query<InventarioCosmetico> q = session.createQuery("FROM InventarioCosmetico " +"WHERE inventario.usuario.id = :idUsuario " +"AND cosmetico.id = :idCosmetico",InventarioCosmetico.class);
+
+            q.setParameter("idUsuario", idUsuario);
+            q.setParameter("idCosmetico", cosmetico.getId());
+
+            List<InventarioCosmetico> lista = q.list();
+
+            if (!lista.isEmpty()) {
+                invCo = lista.get(0);
+            }
+        }
+
+
+        return invCo;
     }
 
     private void comprobacionSubidaRango(int idUsuario) {
@@ -454,9 +485,37 @@ public class BaseDatosManager {
 
     private void darSobre(int idUsuario, Sobre sobre, int cantidad) {
         System.out.println("TeamUp|MensajeInterno| Entramos a dar sobre al usuario " + idUsuario);
-        InventarioSobre invS = new InventarioSobre(obtenerInventarioPorId(idUsuario), sobre, cantidad);
-        persistirObjeto(invS);
+        InventarioSobre invSo = comprobarUsuarioTieneSobre(idUsuario, sobre);
+        if (invSo != null) {
+            invSo.setCantidad(invSo.getCantidad() + cantidad);
+            actualizarObjeto(invSo);
+        } else {
+            InventarioSobre invS = new InventarioSobre(obtenerInventarioPorId(idUsuario), sobre, cantidad);
+            persistirObjeto(invS);
+        }
+
     }   
+    
+    private InventarioSobre comprobarUsuarioTieneSobre(int idUsuario, Sobre sobre) {
+        InventarioSobre invSo = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<InventarioSobre> q = session.createQuery("FROM InventarioSobre " +"WHERE inventario.usuario.id = :idUsuario " +"AND sobre.id = :idSobre",InventarioSobre.class);
+
+            q.setParameter("idUsuario", idUsuario);
+            q.setParameter("idSobre", sobre.getId());
+
+            List<InventarioSobre> lista = q.list();
+
+            if (!lista.isEmpty()) {
+                invSo = lista.get(0);
+            }
+        }
+
+
+        return invSo;
+    }
 
     private Inventario obtenerInventarioPorId(int idUsuario) {
         Inventario inv = null;
@@ -602,7 +661,7 @@ public class BaseDatosManager {
     public String partidoFinalizado(int idUsuario, int idPartido) {
         String respuesta = AyudanteConteston.contestarError("nSHPTP", "No se ha podido terminar el partido porque no ha empezado o no eres el creador");
         Partido partido = obtenerPartidoPorId(idPartido);
-        if (LocalDateTime.now().isAfter(partido.getFecha())) { // cambiado solo con el ! para
+        if (LocalDateTime.now().isAfter(partido.getFecha()) && partido.getCreador().getId() == idUsuario) { // cambiado solo con el ! para comprobar, quita EL !
             partido.setEstado("terminado");
             actualizarObjeto(partido);
             respuesta = AyudanteConteston.contestarTodoBien("pTC", "Partido terminado correctamente", null);
@@ -905,7 +964,7 @@ public class BaseDatosManager {
 
 
     public String obtenerInventarioUsuario(int idUsuario) {
-        String respuesta = "";
+        String respuesta = AyudanteConteston.contestarError("nSHPOBI", "Error no se ha podido obtener el inventario");
 
         try (Session session = sessionFactory.openSession()){
             Query<InventarioCosmetico> q = session.createQuery( "FROM InventarioCosmetico WHERE inventario.usuario.id = :idUsuario", InventarioCosmetico.class);
@@ -913,10 +972,10 @@ public class BaseDatosManager {
             q.setParameter("idUsuario", idUsuario);
 
             List<InventarioCosmetico> listaProcesar = q.list();
-            List<Cosmetico> cosmeticos = new ArrayList<>();
+            List<CosmeticoSimplificado> cosmeticos = new ArrayList<>();
 
             for (InventarioCosmetico elemento : listaProcesar) {
-                cosmeticos.add(elemento.getCosmetico());
+                cosmeticos.add(new CosmeticoSimplificado(elemento.getCosmetico().getNombre(),  elemento.getCosmetico().getTipo(), elemento.getCosmetico().getRareza(), elemento.getCantidad(), elemento.getCosmetico().isVendible())); //titulo, tipo, rareza, cantidad, vendible
             }
             Map<String, Object> datos = new HashMap<>();
 
