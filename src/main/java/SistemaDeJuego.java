@@ -8,52 +8,159 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import claseshibernate.Carta;
-import claseshibernate.Usuario;
+import clases.Rango;
+import clases.VotacionJugador;
+
 
 public class SistemaDeJuego {
-    private final Integer BASE_PORTER = 70;
-    private final String[] ESTADISTICAS_CAMPO = {"ritmo", "tiro","pase","regate","defensa","fisico"};
-    //creo que no lo necesitamosprivate final String[] ESTADISTICAS_PORTERO = {"estirada","manejo","saque","reflejos","velocidad","posicionamiento"};
     
     private Servidor sv;
+    private List<Rango> listaRangos = new ArrayList<>();
     private Set<JugadorSistema> jugadores = Collections.synchronizedSet(new HashSet<>()); // clientes actualmente conectados
 
 
 
     public SistemaDeJuego(Servidor sv) {
         this.sv = sv;
+        prepararRangos();
+    }
+
+    public void prepararRangos() {
+        listaRangos.add(new Rango(0, 150, "sobreBronce", "Bronce"));
+        listaRangos.add(new Rango(150, 300, "sobrePlata", "Plata"));
+        listaRangos.add(new Rango(300, 450, "sobreOro", "Oro"));
+        listaRangos.add(new Rango(450, 600, "sobreElite", "Elite"));
+    }
+
+    public String salirAplicacion(JugadorSistema j) {
+        jugadores.remove(j);
+        System.out.println("TeamUp|MensajeInterno|Jugador con id " + j.getIdUsuario() + " sale de la aplicacion");
+        j.cerrarConexion();
+        return AyudanteConteston.contestarTodoBien("jSdA", "Jugador ha salido de la aplicacion correctamente", null);
     }
 
     public String buzon(String mensaje, JugadorSistema j) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
-        String respuesta = "TeamUp|Directriz|"; 
+        String respuesta = ""; 
         System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui con " + mensaje);
-        
+        // idea podemos hacer algo para evitar que dos cuentas esten conectadas a la misma vez para evitar desincronizaciones, esto para nuestro sistema es facil porque el objeto JugadorSistema tiene la id del usuario
+        //entonces solo tenemos que crear un metodo que el usuario al salir de la aplicacion se elimine del set sincronizado y al entrar le ponemos la id pero antes de meterle en el set de jugadores comprobamos si contains j
+        // para esot hacemos  el equals en jugadorSistema por la id de usuario
         try {
             ObjectMapper mapper = new ObjectMapper();
 
             Map<String, Object> mensajeMapita = mapper.readValue(mensaje, Map.class);
 
             String opcion = (String) mensajeMapita.get("tipo");
+            Map<String, String> datos = null;
 
-            Map<String, String> datos = mapper.convertValue(
-                mensajeMapita.get("data"),
-                new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {}
-            );
-
-            switch (opcion) { 
+            switch (opcion) {  // podemos añadir un case que sea ver perfil de jugador y se llamara cada vez que un jugador pinche en un usuario y al final podriamos reciclar lo de ver nuestro perfil
                 case "registro":
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                         respuesta = registrarUsuario(datos, j); // Comprobar en la interfaz si el usuario introduce dato o no porque aqui pensamos que llega todo "bien" bien no se pero al menos informacion llega
                         break;
                 case "iniciarSesion": // iniciar sesion, el usuario le da el cliente comprueba si tenemos un token, si tenemos un token al darle al boton entraremos directamente a la aplicacion, sino pues a poner los datos
-                        respuesta = iniciarSesion(datos, j); // TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:token:siºselector:valorºhash:valor
-                        break; 
-            }
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                        respuesta = iniciarSesion(datos, j); 
+                        break;
+                case "ranking":
+                        System.out.println("TeamUp|MensajeInterno|Entro en ranking"); // desde el  cliente se seleccionara dos filtros mayor o menor y el rango 
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                        respuesta = obtenerRanking(datos.get("rango"), datos.get("mayorMenor") );
+                        break;
+                case "rangos": // al entrar a ver los rangos
+                        System.out.println("TeamUp|MensajeInterno|Entro en rangos");
+                        respuesta = obtenerRangos();
+                        break;
+                case "partidos": // el usuario entra en mis partidos, entra aqui en este case dentro de este case habra otro switch porque la primera vez mostramos todos los partidos del usuario pero el usuario puede pinchar en el partido y ver todos los participantes y quien gano el mvp y esas cosas
+                        // aqui es cuando el usuario quiere ver el historial de partidos que ha jugado, pasamos los partidos que ha jugado facil, con toda la informacion de los partidos
+                        
+                        Map<String, Object> datosPartidos = mapper.convertValue(mensajeMapita.get("data"),new TypeReference<Map<String, Object>>() {});
+                        String opcionPartidos = (String) datosPartidos.get("tipoPartido");
+                        System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionPartidos);
+                        switch (opcionPartidos) {
+                            case "verPartidos" : // opcion cambiada antes se llamaba primera carga, aqui directamente le paso tambien los filtros y si se recarga se vuelve aqui
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = partidosPrimeraCarga(datos.get("ciudad"), datos.get("soloverificados"));
+                                break;
+                            case "crearPartido": // el usuario pincha crear partido y en la interfaz se le abre una ventana para crear el partid
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = crearPartido(datos, j);
+                                break;
+                            case "unirsePartido":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = unirsePartido(j.getIdUsuario(),Integer.parseInt(datos.get("idPartido")), datos.get("equipo")); // equipo solo puede ser equipo1 o equipo2
+                                break;
+                            case "abandonarPartido": // solo se podrá abandonar el partido si quedan mas de 24 horas para el partido
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = abandonarPartido(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
+                                break;
+                            case "masInfoPartido":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = verMasInfoPartido(Integer.parseInt(datos.get("idPartido")));
+                                break;
+                            case "verMisPartidos":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = verMisPartidos(j.getIdUsuario(), datos.get("estado")); // para que el usuario pueda filtrar por estado (abierto o terminado)
+                                break;
+                            case "pasarPartidoFinalizado":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = partidoFinalizado(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
+                                break;
+                            case "votarJugadores": // el usuario vota punto a cada jugador, el creador envia goles y asistencias de cada uno y al mvp 
+                                String equipoGanador = (String) datosPartidos.get("equipoGanador");
+                                List<VotacionJugador> votaciones = mapper.convertValue(datosPartidos.get("votaciones"),new com.fasterxml.jackson.core.type.TypeReference<List<VotacionJugador>>() {});
+                                respuesta = votarJugadores(j.getIdUsuario(), Integer.parseInt((String) datosPartidos.get("idPartido")), votaciones, equipoGanador);
+                                break; // el codigo de respuesta si ha votado correctamente inmediatmente se deshabilitara el boton de votar en ese partido
+                            case "recogerRecompensa":
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = recogerRecompensa(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
+                                break;
+                        }
+                        break;
+                case "salirAplicacion":
+                        salirAplicacion(j);
+                        break;
+                case "inventarioJugador":
+                        respuesta = obtenerInventarioJugador(j.getIdUsuario()); //puedo aprovechar que el JugadorSistema tiene la id del usuario del que esta registrado y que aqui solo se puede llegar si esstas registrado
+                        break;
+                case "verPerfilJugador":
+                        //esto es una funcion para cuando le demos click a cualquier foto de jugador pues en la interfaz veremos el perfil y esta es la funcion que se encarga
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                        respuesta = verMasInfoUsuario(Integer.parseInt(datos.get("idJugador")));
+                        break;
+                case "cosmeticos": // esto va a ser la funcion como partidos pero para todo lo relacionado con cosmeticos abrir sobres, vender cosas en el mercado, ver mercado etc
+                        datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                        String opcionCosmeticos = datos.get("tipoCosmeticos");
+                        System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionCosmeticos);
+                        switch (opcionCosmeticos) { // diferenciamos comprar sobre lo compra y lo llama a la funcion abrir de la basedatosmanager y luego en el switch la otra funcion de abrir es para abrir un sobre que tines
+                            case "comprarSobre" : // opcion cambiada antes se llamaba primera carga, aqui directamente le paso tambien los filtros y si se recarga se vuelve aqui
+                                // recibimos id del sobre que quiere el usuario abrir, hacemos la simulacion de lo que toca devolvemos lo que ha tocado simple, se comprueba si se puede comprar
+                                break; // en esta funcion va implicito comprar si le damos a abrir se recibe tambien el precio del sobre
+                            case "verSobres": // aqui para reciclar podriamos hacer que se reciba "filtro" de misSobres o sobres de la tineda
+                                //devolvemos todos los sobres disponibles con su precio id y las cosas que lo formen como foto etc nombre esta funcion se ejecuta siempre que el usuario entra en tienda
+                                break;
+                            case "cosmeticosConseguidos": // usuario entra en esta funcion en cuanto le da a guardar en o recoger todo no se como le llamare a esta funcion, pero el usuario entra cuando ha abierto el sobre, esto es para recoger todo 
+                                break;
+                            case "mercado": // merrcado funcionamiento >> Usuario pone a la venta algo eso pasa a estar en la tabla mercado y "desaparece del inventario del usuario" el usuario en la pestaña mercado podrá ver mis articulos y cada articulo irá con la id del usuario por lo tanto si alguien compra algo, el usuario recibe las monedas automaticamente, en mis articulos el usuario podrá quitar el articulo de la venta, se paga con monedas 
+                                break; // aqui imitaremos lo que hicimos en partido y pondremoss filtro  de calidad
+                            case "comprarArticulo": // se recibe la id del articulo en mercado, y la id del usuario directamente aqui comprobamos si el usuario tiene monedas suficinetes y si tiene lo compra, desaparece del mercado y se pasa al inventario del usuario
+                                break;
+                            case "venderArticulo": // se recibe id del usuario y id del aarticulo del inventario y el precio, se comprueba si se puede vender el articulo y si se puede lo pone en venta (se añade al mercado y se quita del inventario del usuario)
+                                break; // importante hay que comprobar que el articulo que quiera vender no lo tenga equipado o lo cambiamos por otro articulo del invetario, porque siempre va atenerl os basicos ya que no son vendibles, esto hazlo como te parezca
+                            case "quitarArticulo": // pasamos idArticulo y idUsuario supongo y lo quitariamos y lo devolveriamos al inventario del jugador
+                                break;
+                            case "abrirSobre": // pasamos id del sobre que tenemos y obviamente como siempre la id del usuario, simulamos las posibilidades y quitamos del inventario el sobre y damos la recompensas
+                                break;
+                            case "cambiarCosmetico": // recibimos idUsuario como siempre, y el id del cosmetico, con eso podemos comprobar el tipo que es y dependiendo del tipo que sea pues lo cambiamos y ya esta
+                                break; // se puede recibir una tarjeta de visita, titulo o diseño carta // las funciones de cambiar cosmetico modularizalas para reutilizarlas
+                        }   
+                    break;
+            } 
         } catch (Exception em) {
             System.out.println("TeamUp|Error|EM5" + em.getMessage());
         }
@@ -61,7 +168,66 @@ public class SistemaDeJuego {
         return respuesta;
     }
 
-    public String iniciarSesion(Map<String,String> mapaDatos, JugadorSistema j) { //TeamUpCliente;Respuesta|iniciarSesion|correo:valorºcontraseniaºvalor:remember:siºselector:valorºtoken:valor
+    public String recogerRecompensa(int idUsuario, int idPartido) {
+        return sv.getBaseDatosManager().recogerRecompensas(idUsuario, idPartido);
+    }
+
+    public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones, String equipoGanador) {
+        return sv.getBaseDatosManager().votarJugadores(idUsuario, idPartido, votaciones, equipoGanador);
+    }
+
+    public String partidoFinalizado(int idUsuario, int idPartido ) {
+        return sv.getBaseDatosManager().partidoFinalizado(idUsuario,  idPartido);
+    }
+
+    public String verMisPartidos(int idUsuario,  String estado) {
+        System.out.println("TeamUp|MensajeInterno| Has entrado en partidos del usuario");
+        return sv.getBaseDatosManager().obtenerPartidosUsuario(idUsuario,  estado);
+    }
+
+    public String verMasInfoUsuario(int idUsuario) {
+        return sv.getBaseDatosManager().verPerfilJugador(idUsuario);
+    }
+
+    public String verMasInfoPartido(int idPartido) {
+        return sv.getBaseDatosManager().verMasInfoPartido(idPartido);
+    }
+
+    public String unirsePartido(int idUsuario, int idPartido, String equipo) {
+        return sv.getBaseDatosManager().unirsePartido(idUsuario, idPartido, equipo);
+    }
+
+    public String abandonarPartido(int idUsuario, int idPartido) {
+        return sv.getBaseDatosManager().abandonarPartido(idUsuario, idPartido);
+    }
+
+    public String partidosPrimeraCarga(String ciudad, String soloverificados) {
+        System.out.println("TeamUp|MensajeInterno| Has entrado en partidos primera carga");
+        return sv.getBaseDatosManager().obtenerPartidos(ciudad, soloverificados);
+    }
+
+    public String crearPartido(Map<String,String> mapaDatos, JugadorSistema j) {
+        return sv.getBaseDatosManager().registarPartido(mapaDatos, j);
+    }
+
+    public String obtenerRangos() {
+        Map<String, Object> datos = new HashMap<>();
+        datos.put("rangos", listaRangos);
+        String respuesta = AyudanteConteston.contestarTodoBien("Er", "Rangos enviados", datos);
+
+
+        return respuesta;
+    }
+
+    public String obtenerRanking(String rangoFiltro, String mayorMenor) { // rango filtro el numero del rango 1-4 y si es mayor o menor (mayor/menor)
+        return sv.getBaseDatosManager().obtenerListaJugadoresRango(rangoFiltro, mayorMenor);
+    }
+
+    public String obtenerInventarioJugador(int idUsuario) {
+        return sv.getBaseDatosManager().obtenerInventarioUsuario(idUsuario);
+    }
+
+    public String iniciarSesion(Map<String,String> mapaDatos, JugadorSistema j) { 
             String respuesta = "";
             System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (iniciar sesion) con " + mapaDatos.get("correo"));
             
@@ -72,15 +238,19 @@ public class SistemaDeJuego {
             }
 
 
-            if (j.getIdUsuario() != -33) 
+            if (j.getIdUsuario() != -33 && !jugadores.contains(j) ) { 
                 jugadores.add(j);
+            } else {
+                j.setIdUsuario(-33);
+                respuesta = AyudanteConteston.contestarError("eJyC", "El usuario esta conectado desde otro dispositivo");
+            }
             
 
 
             return respuesta;
     }
 
-    public String registrarUsuario(Map<String,String> mapaDatos, JugadorSistema j) { //datos formato es ---> |registroºvalor:contraseniaºvalor: el recordarmeºvalor (0 Falso o 1 true) va al final
+    public String registrarUsuario(Map<String,String> mapaDatos, JugadorSistema j) { 
         String respuesta = "TeamUp|Directriz|errOe";
         System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (registrar) con " + mapaDatos.get("nombre"));
 
@@ -89,188 +259,14 @@ public class SistemaDeJuego {
         respuesta = sv.getBaseDatosManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"),mapaDatos.get("recordarme"), j);
 
 
-        if (j.getIdUsuario() != -33) {
-            System.out.println("TeamUp|MensajeInterno|Voy a entrar a generador de carta con: " + j.getIdUsuario());
-            generadorCarta(mapaDatos.get("posicion1"), mapaDatos.get("posicion2"), mapaDatos.get("nombre"));
+        if (j.getIdUsuario() != -33) 
             jugadores.add(j);
-        }
+        
 
 
         return respuesta;
 
     }
-
-    private void generadorCarta(String posicion1, String posicion2, String nombre) {
-        Random generador = new Random();
-        System.out.println("TeamUp|MensajeInterno|Estoy dedntro de generador de carta, buenas con usuario " + nombre);
-        Usuario usu = sv.getBaseDatosManager().obtenerUsuario(nombre);
-        System.out.println("TeamUp|MensajeInterno|He obtenido el siguiente usuario: " + usu.getNombre() + " con " + usu.getId());
-        if (posicion1.equals("por") || posicion2.equals("por")) {
-            String posicionCampo = "";
-            if (!posicion1.equals("por")) {
-                posicionCampo = posicion1;
-            } else {
-                posicionCampo = posicion2;
-            }
-            
-            List<String>estadisticasCambiantes = obtenerBonus(posicionCampo);
-            Map<String, Integer> estadisticasCampo = new HashMap<>();
-            for (String estadistica : ESTADISTICAS_CAMPO) {
-                int sumaEstadistica = 70 + generador.nextInt(4)+1;
-                if (estadistica.equals(estadisticasCambiantes.get(0))) { 
-                    estadisticasCampo.put(estadistica,sumaEstadistica+5 );
-                } else if (estadistica.equals(estadisticasCambiantes.get(1))) {
-                    estadisticasCampo.put(estadistica,sumaEstadistica-3 );
-                } else {
-                    estadisticasCampo.put(estadistica, sumaEstadistica);
-                }
-            }
-            Carta c  = new Carta(estadisticasCampo.get("ritmo"), estadisticasCampo.get("tiro"), estadisticasCampo.get("pase"), estadisticasCampo.get("regate"), estadisticasCampo.get("defensa"), estadisticasCampo.get("fisico"), usu, sv.getBaseDatosManager().obtenerCosmetico(1));
-            
-            c.setPosicionamiento(BASE_PORTER + generador.nextInt(8));
-            c.setReflejos(BASE_PORTER + generador.nextInt(8));
-            c.setManejo(BASE_PORTER + generador.nextInt(8));
-            c.setVelocidad(BASE_PORTER + generador.nextInt(8));
-            c.setEstirada(BASE_PORTER + generador.nextInt(8));
-            System.out.println("TeamUp|MensajeInterno|Carta con estadisticas " + c.getRegate() + " regate");
-            sv.getBaseDatosManager().registrarCarta(c);
-
-        } else {
-            System.out.println("TeamUp|MensajeInterno|Entramos en el else donde se crean las cartas para gente con posicion de campo no portero");
-            List<String>posiciones = new ArrayList<>();
-            posiciones.add(posicion1);
-            posiciones.add(posicion2);
-            List<String> estadisticasCambiantes = obtenerBonus(posiciones);
-            System.out.println("TeamUp|MensajeInterno|Tamanio de estadisticas cambiantes " + estadisticasCambiantes.size());
-            Map<String, Integer> estadisticasCampo = new HashMap<>();
-            for (String estadistica : ESTADISTICAS_CAMPO) {
-                int sumaEstadistica = 70 + generador.nextInt(4)+1;
-                if (estadistica.equals(estadisticasCambiantes.get(0)) || estadistica.equals(estadisticasCambiantes.get(2))) {
-                    estadisticasCampo.put(estadistica, sumaEstadistica + 5);
-                } else if (estadistica.equals(estadisticasCambiantes.get(1)) || estadistica.equals(estadisticasCambiantes.get(3))) {
-                    estadisticasCampo.put(estadistica, sumaEstadistica - 3);
-                } else {
-                    estadisticasCampo.put(estadistica, sumaEstadistica);
-                }
-            }
-            Carta c = new Carta(estadisticasCampo.get("ritmo"), estadisticasCampo.get("tiro"), estadisticasCampo.get("pase"), estadisticasCampo.get("regate"), estadisticasCampo.get("defensa"),estadisticasCampo.get("fisico"), usu, sv.getBaseDatosManager().obtenerCosmetico(1));            
-
-            sv.getBaseDatosManager().registrarCarta(c);
-        }
-        
-    }
-
-    private List<String> obtenerBonus(List<String> posicionesRecibidas) { //primera y tercera mejorar, segunda y cuarta empeorar
-        List<String> estadistica = new ArrayList<>();
-
-
-        for (String posicion : posicionesRecibidas) {
-            List<String> temporal = obtenerBonus(posicion);
-            estadistica.add(temporal.get(0));
-            estadistica.add(temporal.get(1));
-        }
-
-
-        return estadistica;
-    }
-
-    private List<String> obtenerBonus(String posicion) { //devolvemos dos estadisticas la primera el bonus y la segunda la que empeora es 
-        List<String> estadistica = new ArrayList<>();
-        Random generador = new Random();
-        int caraCruz = generador.nextInt(2);
-        System.out.println("TeamUp|MensajeInterno|Entramos en obtener bonus");
-
-        switch (posicion) {
-            case "dc" :
-                if (caraCruz == 0) {
-                    estadistica.add("tiro");
-                    estadistica.add("defensa");
-                } else {
-                    estadistica.add("regate");
-                    estadistica.add("pase");
-                }
-                break;
-            case "ei":
-                if (caraCruz == 0) {
-                    estadistica.add("ritmo");
-                    estadistica.add("fisico");
-                } else {
-                    estadistica.add("regate");
-                    estadistica.add("defensa");
-                }
-                break;
-            case "ed":
-                if (caraCruz == 0) {
-                    estadistica.add("regate");
-                    estadistica.add("fisico");
-                } else {
-                    estadistica.add("ritmo");
-                    estadistica.add("defensa");
-                }
-                break;
-            case "mc":
-                if (caraCruz == 0) {
-                    estadistica.add("regate");
-                    estadistica.add("tiro");
-                } else {
-                    estadistica.add("pase");
-                    estadistica.add("ritmo");
-                }
-                break;
-            case "mcd":
-                if (caraCruz == 0) {
-                    estadistica.add("defensa");
-                    estadistica.add("tiro");
-                } else {
-                    estadistica.add("pase");
-                    estadistica.add("ritmo");
-                }
-                break;
-            case "mco":
-                if (caraCruz == 0) {
-                    estadistica.add("tiro");
-                    estadistica.add("defensa");
-                } else {
-                    estadistica.add("pase");
-                    estadistica.add("fisico");
-                }
-                break;
-            case "dfc":
-                if (caraCruz == 0) {
-                    estadistica.add("defensa");
-                    estadistica.add("regate");
-                } else {
-                    estadistica.add("fisico");
-                    estadistica.add("tiro");
-                }
-                break;
-            case "li":
-                if (caraCruz == 0) {
-                    estadistica.add("ritmo");
-                    estadistica.add("fisico");
-                } else {
-                    estadistica.add("defensa");
-                    estadistica.add("tiro");
-                }
-                break;
-            case "ld":
-                if (caraCruz == 0) {
-                    estadistica.add("ritmo");
-                    estadistica.add("fisico");
-                } else {
-                    estadistica.add("defensa");
-                    estadistica.add("tiro");
-                }
-                break;
-            default:
-                throw new AssertionError();
-        }
-
-
-        return estadistica;
-    }
-
-
 }
 
 

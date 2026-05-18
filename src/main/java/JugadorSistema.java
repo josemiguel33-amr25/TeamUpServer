@@ -52,7 +52,7 @@ public class JugadorSistema implements  Runnable {
         }
     }
 
-    private void cerrarConexion() {
+    public void cerrarConexion() {
         try {
             if (zocalo != null) zocalo.close();
             System.out.println("Socket de jugador cerrado");
@@ -71,5 +71,27 @@ public class JugadorSistema implements  Runnable {
 
     public void setIdUsuario(int idUsuario) {
         this.idUsuario = idUsuario;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + idUsuario;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        JugadorSistema other = (JugadorSistema) obj;
+        if (idUsuario != other.idUsuario)
+            return false;
+        return true;
     }
 }

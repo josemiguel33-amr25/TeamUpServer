@@ -47,3 +47,200 @@ Mando
 
 Recibo
 Servidor: {"codigo":"iCcTkC","mensaje":"Inicio de sesión correcto","status":"Perfecto"}
+
+Mando
+{"tipo":"rangos","data":{}}
+
+
+Servidor: {"codigo":"Er","datos":{"rangos":
+[{"puntosMin":0,"puntosMax":150,"nombreSobre":"sobreBronce","nombreRango":"Bronce"},
+{"puntosMin":150,"puntosMax":300,"nombreSobre":"sobrePlata","nombreRango":"Plata"},
+{"puntosMin":300,"puntosMax":450,"nombreSobre":"sobreOro","nombreRango":"Oro"},
+{"puntosMin":450,"puntosMax":600,"nombreSobre":"sobreElite","nombreRango":"Elite"}]},"mensaje":"Rangos enviados","status":"Perfecto"}
+
+
+Mando
+{"tipo":"inventarioJugador","data":{}}
+
+Recibo
+Servidor: {"codigo":"iNe","datos":{"cosmeticos":[]},"mensaje":"Inventario enviado","status":"Perfecto"}
+
+
+Mando
+{"tipo":"ranking","datos":{"rango":"1","mayorMenor":"menor"}} 
+
+
+Recibo
+
+
+ {"codigo":"rCc","datos":
+ {"jugadores":[{"nombre":"Juan","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Juan8391","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Juan3256","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Juan888","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"IlloJuan","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Miki31410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Miki410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Mi10","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Miki41440","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"BrunnoFernandes","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"Judei410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahMane410","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahMane","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahMane1433","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"LenaMiki","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"SalahManeEndrick","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0},
+ {"nombre":"FernandoAlonso3314","rango":"1","puntos":0,"reputacion":0,"goles":0,"asistencias":0,"mvps":0}]},"mensaje":"Ranking creado correctamente","status":"Perfecto"}
+
+
+ mando 
+
+ {"tipo":"partidos","data":{"tipoPartido":"crearPartido","titulo":"Futbol 7 competitivo en Praga","ubicacion":"Football Arena Praha","precio":"8","ciudad":"Praga","verificados":"si","anio":"2026","mes":"6","dia":"14","hora":"21","minutos":"00"}}
+
+
+ recibo
+
+ Servidor: {"codigo":"pCC","mensaje":"Partido creado correctamente","status":"Perfecto"}
+
+
+
+Mando
+ {"tipo":"partidos","data":{"tipoPartido":"verPartidos"}}
+
+
+ recibo
+ Servidor: {"codigo":"pDc","datos":{"partidos":[{"idPartido":1,"tituloPartido":"Futbol 7 competitivo en Prague 20:00","ubicacion":"Sport Centrum Praha","precio":5.0,"dia":10,"mes":5,"anio":2026,"hora":13,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"SalahMane","idUsuario":15,"fotoUsuario":"default.png"},{"idPartido":3,"tituloPartido":"Futbol 7 competitivo en Praga","ubicacion":"Football Arena Praha","precio":8.0,"dia":14,"mes":6,"anio":2026,"hora":21,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"SalahMane410","idUsuario":14,"fotoUsuario":"default.png"}]},"mensaje":"Partidos devueltos correctamente","status":"Perfecto"}
+
+
+mando 
+
+{"tipo":"partidos","data":{"tipoPartido":"verPartidos","ciudad":"Praga","soloverificados":"no"}} 
+
+
+ Servidor: {"codigo":"pDc","datos":{"partidos":[{"idPartido":3,"tituloPartido":"Futbol 7 competitivo en Praga","ubicacion":"Football Arena Praha","precio":8.0,"dia":14,"mes":6,"anio":2026,"hora":21,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"SalahMane410","idUsuario":14,"fotoUsuario":"default.png"}]},"mensaje":"Partidos devueltos correctamente","status":"Perfecto"}
+
+ Mando
+ {"tipo":"partidos","data":{"tipoPartido":"unirsePartido","idUsuario":"15","idPartido":"5"}}
+
+
+ Mando
+ {"tipo":"registro","data":{"nombre":"MikiiiRedempetion","correo":"admin@gmail.com","contrasenia":"1234@5311@M6aa","posicion1":"dc","posicion2":"mc","recordarme":"1"}}
+
+recibo
+Servidor: {"codigo":"rC","datos":{"tarjetaVisita":"tarjetaVisitaBaseComun","mvp":0,"posicion1":"dc","correo":"admin@gmail.com","posicion2":"mc","titulo":"tituloRookieComun","selector":"20Miki1421THURSDAY","partidosJugados":0,"nombre":"MikiiiRedempetion","goles":0,"asistencias":0,"token":"17Miki14202621dcjoe"},"mensaje":"Registro completo","status":"Perfecto"}
+
+USUARIOS
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"20Miki1421THURSDAY","token":"17Miki14202621dcjoe"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"21Mich1434THURSDAY","token":"17Mich14202634dctokyo"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"22Kobe1437THURSDAY","token":"17Kobe14202637dcfantasmaavc"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"27ant1458SATURDAY","token":"13ant14202658dclologre"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"28fir141SATURDAY","token":"14fir1420261dccuandomevaya"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"29oxC142SATURDAY","token":"14oxC1420262dcesacruz"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"30pau143SATURDAY","token":"14pau1420263dcgraxxqjsm"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"31Mik144SATURDAY","token":"14Mik1420264dcmedialuna"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"32Que145SATURDAY","token":"14Que1420265dcjoe"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"33Ill146SATURDAY","token":"14Ill1420266dcfantasmaavc"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"34duk147SATURDAY","token":"14duk1420267dccuandomevaya"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"35Anu148SATURDAY","token":"14Anu1420268dcfantasmaavc"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"36bad149SATURDAY","token":"14bad1420269dcgraxxqjsm"}}
+
+{"tipo":"iniciarSesion","data":{"remember":"si","selector":"37Jha149SATURDAY","token":"14Jha1420269dcgraxxqjsm"}}
+
+{"tipo":"registro","data":{"nombre":"SalahMane","correo":"miki1444213@gmail.com","contrasenia":"1234Mourvinidupla@","posicion1":"dc","posicion2":"por","recordarme":"0"}}
+
+Mando
+{"tipo":"partidos","data":{"tipoPartido":"masInfoPartido","idPartido":"12"}}
+
+Recibo
+Servidor: {"codigo":"dDPD","datos":{"participantes":[{"nombreUsuario":"SalahMane410","idUsuario":14,"fotoUsuario":"default.png","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"MichaelJordan33","idUsuario":21,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"KobeEnLa","idUsuario":22,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"StpRevenge","idUsuario":23,"fotoUsuario":"default","equipo":null,"goles":0,"asistencias":0,"mvp":false}]},"mensaje":"Se han devuelto correctamente los datos del partido","status":"Perfecto"}
+
+Mando 
+{"tipo":"verPerfilJugador","data":{"idJugador":"19"}}
+
+recibo
+Servidor: {"codigo":"iNSUC","datos":{"verificado":false,"mediaJugador":0,"reputacion":0,"tiro":76,"posicion1":"dc","cartaCosmetico":"cartaOroComun","posicion2":"por","ritmo":72,"titulo":"tituloRookieComun","reflejos":77,"partidosJugados":0,"nombre":"FernandoAlonso3314","fisico":72,"tarjetaVisita":"tarjetaVisitaBaseComun","posicionamiento":74,"correo":"viniciushactrickclasico@gmail.com","manejo":77,"asistencias":0,"mvp":0,"defensa":71,"goles":0,"saque":50,"rango":1,"regate":74,"pase":73,"mediaPortero":0,"estirada":73,"fotoperfil":"default","velocidad":77},"mensaje":"Informacion del usuario conseguida correctamente","status":"Perfecto"}
+
+Mando
+{"tipo":"partidos","data":{"tipoPartido":"verMisPartidos","estado":"abierto"}}
+
+recibo
+
+Servidor: {"codigo":"pDUC","datos":{"partidos":[{"idPartido":15,"tituloPartido":"Futbol 7 sunset competitivo","ubicacion":"Complejo Deportivo Bah?a Sur","ciudad":"Cadiz","precio":6.0,"dia":22,"mes":6,"anio":2026,"hora":20,"minutos":0,"estado":"abierto","soloVerificados":true,"nombreUsuario":"MikiiiRedempetion","idUsuario":20,"fotoUsuario":"default"}]},"mensaje":"Partidos devueltos correctamente","status":"Perfecto"}
+
+
+mando 
+{"tipo":"partidos","data":{"tipoPartido":"unirsePartido","idPartido":"17","equipo":"equipo2"}} 
+
+recibo 
+Servidor: {"codigo":"pCC","mensaje":"El partido se ha creado correctamente","status":"Perfecto"}
+
+
+mando
+{"tipo":"partidos","data":{"tipoPartido":"abandonarPartido","idPartido":"17"}}
+
+
+recibo 
+Servidor: {"codigo":"uHAEPC","mensaje":"El usuario ha abandonado el partido correctamente","status":"Perfecto"}
+
+
+mando
+{"tipo":"partidos","data":{"tipoPartido":"masInfoPartido","idPartido":"17"}}
+
+
+recibo
+
+Servidor: {"codigo":"dDPD","datos":{"creadorPartido":20,"idPartido":17,"estadoPartido":"lleno","participantes":[{"nombreUsuario":"MikiiiRedempetion","idUsuario":20,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"MichaelJordan33","idUsuario":21,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"KobeEnLa","idUsuario":22,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"antonioConte","idUsuario":27,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"firmino","idUsuario":28,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"oxChamberlein","idUsuario":29,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"paulPogba33","idUsuario":30,"fotoUsuario":"default","equipo":"equipo1","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"MikiRedencion","idUsuario":31,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"Quevedo23","idUsuario":32,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"Illowan","idUsuario":33,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"dukirockstar","idUsuario":34,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"AnuelRHML","idUsuario":35,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"badbunny","idUsuario":36,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false},{"nombreUsuario":"Jhayco","idUsuario":37,"fotoUsuario":"default","equipo":"equipo2","goles":0,"asistencias":0,"mvp":false}]},"mensaje":"Se han devuelto correctamente los datos del partido","status":"Perfecto"}
+
+
+Mando (no siendo creador del partido)
+{"tipo":"partidos","data":{"tipoPartido":"pasarPartidoFinalizado","idPartido":"17"}}
+
+recibo 
+Servidor: {"codigo":"nSHPTP","mensaje":"No se ha podido terminar el partido porque no ha empezado o no eres el creador","status":"error"}
+
+Mando (siendo creador)
+{"tipo":"partidos","data":{"tipoPartido":"pasarPartidoFinalizado","idPartido":"17"}}
+
+recibo
+Servidor: {"codigo":"pTC","mensaje":"Partido terminado correctamente","status":"Perfecto"}
+
+Mando (siendo creador) el creador se vota a si mismo con sus goles, aasitencias y el mvp y a los demas igual por lo tanto el creador vota 14 veces y los demas 13 (excluyendose a si mismos)
+
+{"tipo":"partidos","data":{"tipoPartido":"votarJugadores","idPartido":"17","equipoGanador":"equipo1","votaciones":[{"idUsuario":20,"puntuacion":0,"goles":1,"asistencias":1,"mvp":true},{"idUsuario":21,"puntuacion":4,"goles":0,"asistencias":1,"mvp":false},{"idUsuario":22,"puntuacion":5,"goles":2,"asistencias":0,"mvp":false},{"idUsuario":27,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":28,"puntuacion":4,"goles":1,"asistencias":0,"mvp":false},{"idUsuario":29,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":30,"puntuacion":5,"goles":1,"asistencias":2,"mvp":false},{"idUsuario":31,"puntuacion":3,"goles":1,"asistencias":0,"mvp":false},{"idUsuario":32,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":33,"puntuacion":4,"goles":1,"asistencias":1,"mvp":false},{"idUsuario":34,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":35,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":36,"puntuacion":4,"goles":1,"asistencias":0,"mvp":false},{"idUsuario":37,"puntuacion":3,"goles":0,"asistencias":1,"mvp":false}]}}
+
+recibo
+
+Servidor: {"codigo":"sHPVC","mensaje":"Se ha podido votar correctamente","status":"Perfecto"}
+
+mando (no siendo creador)
+
+{"tipo":"partidos","data":{"tipoPartido":"votarJugadores","idPartido":"17","equipoGanador":"-33","votaciones":[{"idUsuario":20,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":22,"puntuacion":5,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":27,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":28,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":29,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":30,"puntuacion":5,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":31,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":32,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":33,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":34,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":35,"puntuacion":2,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":36,"puntuacion":4,"goles":0,"asistencias":0,"mvp":false},{"idUsuario":37,"puntuacion":3,"goles":0,"asistencias":0,"mvp":false}]}}
+
+
+recibo 
+Servidor: {"codigo":"sHPVC","mensaje":"Se ha podido votar correctamente","status":"Perfecto"}
+
+Mando (no habiendo recogido recompensas)
+
+{"tipo":"partidos","data":{"tipoPartido":"recogerRecompensa","idPartido":"17"}}
+
+recibo 
+Servidor: {"codigo":"rEC","mensaje":"Recompensas entregadas correctamentes","status":"Perfecto"}
+
+Mando habiendo recogido recompensas
+
+Servidor: {"codigo":"rEC","mensaje":"Las recompensas ya han sido recogidas","status":"error"}
+

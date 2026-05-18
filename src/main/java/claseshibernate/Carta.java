@@ -1,5 +1,8 @@
 package claseshibernate;
 
+import java.util.Random;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,6 +36,14 @@ public class Carta {
     private int velocidad;
     private int posicionamiento;
 
+
+    // la media de los jugadores muy importante
+    @Column(name="media_jugador")
+    private int mediaJugador;
+
+    @Column(name="media_portero")
+    private int mediaPortero;
+
     @ManyToOne
     @JoinColumn(name="usuario_id")
     private Usuario usuario;
@@ -52,6 +63,8 @@ public class Carta {
         this.regate = regate;
         this.defensa = defensa;
         this.fisico = fisico;
+        mediaJugador = calcularMedia(ritmo, tiro, pase, regate, defensa, fisico);
+        mediaPortero = calcularMedia(estirada, manejo, saque, reflejos, velocidad, posicionamiento);
         this.usuario = usuario;
         this.cosmetico = cosmetico;
         estirada = 50;
@@ -61,6 +74,10 @@ public class Carta {
         velocidad = 50;
         posicionamiento = 50;
         
+    }
+
+    public int calcularMedia(int stat1, int stat2, int stat3, int stat4, int stat5, int stat6) {
+        return  (stat1 + stat2 + stat3 + stat4 + stat5 + stat6) / 6;        
     }
 
     public void setRitmo(int ritmo) {
@@ -174,6 +191,94 @@ public class Carta {
     public Cosmetico getCosmetico() {
         return cosmetico;
     }
+
+    public int getMediaJugador() {
+        return mediaJugador;
+    }
+
+    public int getMediaPortero() {
+        return mediaPortero;
+    }
+
+    public void setMediaJugador(int mediaJugador) {
+        this.mediaJugador = mediaJugador;
+    }
+
+    public void setMediaPortero(int mediaPortero) {
+        this.mediaPortero = mediaPortero;
+    }
+    // para estadisticas aleatorias tiro random consigo estadistica lo paso a esta funcion
+    public void mejorarEstadistica(String estadistica, int cantidadPuntos) {
+        if (estadistica.equals("tiro")) {
+            tiro = tiro + cantidadPuntos;
+        } else if (estadistica.equals("fisico")) {
+            fisico = fisico + cantidadPuntos;
+        } else if (estadistica.equals("regate")) {
+            regate = regate + cantidadPuntos;
+        } else if (estadistica.equals("defensa")) {
+            defensa = defensa + cantidadPuntos;
+        } else if (estadistica.equals("ritmo")) {
+            ritmo = ritmo + cantidadPuntos;
+        } else if (estadistica.equals("pase")) {
+            pase = pase + cantidadPuntos;
+        } else if (estadistica.equals("manejo")) {
+            manejo = manejo + cantidadPuntos;
+        } else if (estadistica.equals("saque")) {
+            saque = saque + cantidadPuntos;
+        } else if (estadistica.equals("velocidad")) {
+            velocidad = velocidad + cantidadPuntos;
+        } else if (estadistica.equals("estirada")) {
+            estirada = estirada + cantidadPuntos;
+        } else if (estadistica.equals("reflejos")) {
+            reflejos = reflejos + cantidadPuntos;
+        } else if (estadistica.equals("posicionamiento")) {
+            posicionamiento = posicionamiento + cantidadPuntos;
+        }
+    }
+
+    public void subidaTodasEstadisticas(int cantidadPuntos) {
+        tiro = tiro + cantidadPuntos;
+        fisico = fisico + cantidadPuntos;
+        regate = regate + cantidadPuntos;
+        defensa = defensa + cantidadPuntos;
+        ritmo = ritmo + cantidadPuntos;
+        pase = pase + cantidadPuntos;
+
+        if (usuario.esPortero()) {
+            manejo = manejo + cantidadPuntos;
+            saque = saque + cantidadPuntos;
+            velocidad = velocidad + cantidadPuntos;
+            estirada = estirada + cantidadPuntos;
+            reflejos = reflejos + cantidadPuntos;
+            posicionamiento = posicionamiento + cantidadPuntos;
+        }
+    }
+
+    public void subirPorAsistencia() { // pase o regate
+        Random generador = new Random();
+        int caraCruz = generador.nextInt(2);
+
+        if (caraCruz == 1) {
+            regate = regate + 1;
+        } else
+            pase = pase + 1;
+
+    }
+
+    public void subirPorGol() { // tiro, fisico o regate
+        Random generador = new Random();
+        int caraCruz = generador.nextInt(3);
+
+        if (caraCruz == 1) {
+            regate = regate + 1;
+        } else if (caraCruz == 0)
+            tiro = pase + 1;
+        else {
+            fisico = fisico + 1;
+        }
+
+    }
+
 
     
 }

@@ -9,6 +9,8 @@ import java.util.concurrent.Executors;
 
 
 public class Servidor {
+    public static final int caracteresMaximoTitulo = 100;
+    public static final int JUGADORES_MAXIMO = 14; //Estamos hablando de que mi app gira en torno a partidos de futbol 7 (7 + 7)
 
     private ExecutorService ejecutador;
     private Properties propiedades;
@@ -52,6 +54,8 @@ public class Servidor {
                 System.out.println("TeamUp|MensajeInterno| Iniciando comprobacion de token expirados");
                 baseDatosManager.verificadorExpiracionToken();
 
+                System.out.println("TeamUp|MensajeInterno| Iniciando relleno de mapa de concurrencia");
+                baseDatosManager.rellenadorMapaConcurrencia();
                 
                 System.out.println("\n\n\nTeamUp|MensajeInterno| Comprobaciones terminadas \n SERVIDOR INICIADO");
 
