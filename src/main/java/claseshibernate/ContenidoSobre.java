@@ -29,4 +29,16 @@ public class ContenidoSobre {
     public ContenidoSobre() {
         
     }
+
+    public double getProbabilidad() {
+        return probabilidad;
+    }
+
+    public Sobre getSobre() {
+        return sobre;
+    }
+
+    public Cosmetico getCosmetico() {
+        return cosmetico;
+    }
 }

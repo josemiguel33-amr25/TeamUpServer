@@ -20,8 +20,10 @@ import org.hibernate.query.Query;
 import org.mindrot.jbcrypt.BCrypt;
 
 import clases.CosmeticoSimplificado;
+import clases.MercadoSimplificado;
 import clases.Participante;
 import clases.PartidoSimplificado;
+import clases.SobreSimplificado;
 import clases.UsuarioSimplificado;
 import clases.VotacionJugador;
 import claseshibernate.Carta;
@@ -29,6 +31,7 @@ import claseshibernate.Cosmetico;
 import claseshibernate.Inventario;
 import claseshibernate.InventarioCosmetico;
 import claseshibernate.InventarioSobre;
+import claseshibernate.Mercado;
 import claseshibernate.Participacion;
 import claseshibernate.Partido;
 import claseshibernate.RememberToken;
@@ -282,7 +285,329 @@ public class BaseDatosManager {
 
     }
 
+    public String abrirSobre(int idUsuario, String nombreSobre) {
+        String respuesta = AyudanteConteston.contestarError("nSHPAS", "No se ha podido abrir el sobre");
+        Sobre s = obtenerSobre(nombreSobre);
+        Cosmetico cosmetico = s.obtenerContenidoAleatorio().getCosmetico();
+        Map<String, Object> datos = new HashMap<>();
+
+        datos.put("nombreCosmetico", cosmetico.getNombre());
+        
+        darCosmetico(idUsuario, cosmetico, 1);
+        quitarSobre(idUsuario, nombreSobre);
     
+        respuesta = AyudanteConteston.contestarTodoBien("sAC", "Sobre abierto correctamente", datos);
+
+        return respuesta;
+    }
+
+    private void quitarSobre(int idUsuario, String nombreSobre) {
+        Sobre sobre = obtenerSobre(nombreSobre);
+
+        InventarioSobre invSo = comprobarUsuarioTieneSobre(idUsuario, sobre);
+
+        try (Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+            if (invSo != null) {
+
+                invSo.setCantidad(invSo.getCantidad() - 1);
+
+                if (invSo.getCantidad() <= 0) {
+                        session.remove(session.merge(invSo)); // evitar el error detached entity de hibernate (por eso hago el merge, porque viene de otra funcion)
+                    try {
+                        transaction.commit();
+                        System.out.println("TeamUp|MensajeInterno|Eliminado sobre del inventario");
+                    } catch (IllegalStateException em) {
+                        transaction.rollback();
+                        System.out.println("TeamUp|Error|EM2|");
+                    }
+                } else {
+                    actualizarObjeto(invSo);
+                }
+            }
+        }
+
+    }
+
+    public String comprarSobre(int idUsuario, String nombreSobre) {
+        String respuesta = AyudanteConteston.contestarError("eNSHCS", "No se ha podido comprar el sobre porque no tienes monedas suficientes");
+        Sobre sobre = obtenerSobre(nombreSobre);
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+
+        if (u.getMonedas() >= sobre.getPrecio()) {
+            darSobre(idUsuario, sobre, 1);
+            quitarMonedas(idUsuario, sobre.getPrecio());
+            respuesta = AyudanteConteston.contestarTodoBien("sEC", "Sobre comprado correctamente", null);
+        }
+
+        return respuesta;
+
+    }
+
+
+    public String cambiarCosmetico(int idUsuario, int idCosmetico) {
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+        Cosmetico c = obtenerCosmetico(idCosmetico);
+        Carta carta = obtenerCartaUsuario(idUsuario);
+        Map<String, Object> datos = new HashMap<>(); // aqui se va a poner el tipo de cosmetico que se ha cambiado para actualizarlo en el "viewModel de la interfaz para que los cambios funcionen por ejemplo  cambio mi tarjeta de visita pues habrá que actualizar los sitios que se guardan"
+        datos.put("cambiado", c.getTipo());
+        datos.put("nombreNuevo", c.getNombre()); 
+
+        if (c.getTipo().equals("carta")) {
+            carta.setCosmetico(c);// Como lo que tiene el usuario en la interfaz es el nombre del objeto para mandarlo aqui y conseguir la imagen, pues a la interfaz llega cambiado > coge lo que se ha cambiado y lo acutaliza en el objeto que habra en la interfaz (usuario con los datos que le pasamos (como si fuera un viewModel))
+            actualizarObjeto(carta);
+        } else if (c.getTipo().equals("tarjetaVisita")) {
+            u.setTarjetaVisita(c);
+            actualizarObjeto(u);
+        } else if (c.getTipo().equals("titulo")) {
+            u.setTitulo(c);
+            actualizarObjeto(u);
+        }
+
+
+        return AyudanteConteston.contestarTodoBien("sHCECC", "Se ha cambiado el cosmetico correctamente", datos);
+    }
+
+    public String verSobres(int idUsuario, String tipo) {
+        String respuesta = AyudanteConteston.contestarError("uNTS", "El usuario no tiene sobres");
+        
+        if (tipo.equals("usuario")) { // Sobres que tiene el usuario
+            Map<String, Object> datos = new HashMap<>();
+            List<SobreSimplificado> sobres = obtenerSobresUsuario(idUsuario);
+            if (!sobres.isEmpty()) {
+                datos.put("sobres", sobres);
+                respuesta = AyudanteConteston.contestarTodoBien("sHPTLSU", "Todos los sobres del usuario pasados", datos);
+            }
+        } else { // sobres de la tienda
+            Map<String, Object> datos = new HashMap<>();
+            List<SobreSimplificado> sobres = obtenerSobresVenta();
+            datos.put("sobres", sobres);
+            respuesta = AyudanteConteston.contestarTodoBien("sHPTLST", "Todos los sobres de la tienda pasados", datos);
+        }
+
+
+
+        return respuesta;
+    }
+
+    public String obtenerElementosMercado() {
+        String respuesta = AyudanteConteston.contestarError("eNHAM", "No hay articulos en el mercado");
+        List<MercadoSimplificado> objetosSimplificados = new ArrayList<>();
+        Map<String,Object> datos = new HashMap<>();
+
+        
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Mercado> q = session.createQuery("FROM Mercado ORDER BY fechaPublicacion DESC",Mercado.class);
+
+            List<Mercado> elementosMercado = q.list();
+
+            if (!elementosMercado.isEmpty()) {
+                for (Mercado m : elementosMercado) 
+                    objetosSimplificados.add(new MercadoSimplificado(m.getCosmetico().getNombre(), m.getVendedor().getNombre(), m.getVendedor().getId(), m.getPrecio(), m.getId()));
+                
+                datos.put("elementos", objetosSimplificados);
+                respuesta = AyudanteConteston.contestarTodoBien("sHDEM", "Devuelto elementos dentro de mercado", datos);
+            }
+
+
+        }
+
+        return respuesta;
+    }
+
+
+    public String obtenerElementosUsuarioMercado(int idUsuario) {
+        String respuesta = AyudanteConteston.contestarError("eNHAM", "No tienes articulos en el mercado");
+        List<MercadoSimplificado> objetosSimplificados = new ArrayList<>();
+        Map<String,Object> datos = new HashMap<>();
+
+        
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Mercado> q = session.createQuery("FROM Mercado " +"WHERE vendedor.id = :idUsuario " +"ORDER BY fechaPublicacion DESC",Mercado.class);
+            q.setParameter("idUsuario", idUsuario);
+            List<Mercado> elementosMercado = q.list();
+
+            if (!elementosMercado.isEmpty()) {
+                for (Mercado m : elementosMercado) 
+                    objetosSimplificados.add(new MercadoSimplificado(m.getCosmetico().getNombre(), m.getVendedor().getNombre(), m.getVendedor().getId(), m.getPrecio(), m.getId()));
+                
+                datos.put("elementos", objetosSimplificados);
+                respuesta = AyudanteConteston.contestarTodoBien("sHDEM", "Devuelto elementos dentro de mercado del usuario", datos);
+            }
+
+
+        }
+
+        return respuesta;
+    }
+
+    
+
+    public String quitarArticuloMercado(int idUsuario, int idElementoMercado) { 
+        String respuesta = AyudanteConteston.contestarError("nSHPQEADM", "No se ha podido quitar el articulo del mercado");
+        Mercado elemento = obtenerElementoMercado(idElementoMercado);
+        
+        try (Session session = sessionFactory.openSession()){
+            if (elemento != null) {
+                darCosmetico(idUsuario, elemento.getCosmetico(), 1);
+                respuesta = AyudanteConteston.contestarTodoBien("sHQEADM", "Se ha quitado el articulo del mercado", null);
+                eliminarArticuloMercado(elemento);
+            }
+        }
+        
+
+        return respuesta;
+
+    
+    }
+
+    private void eliminarArticuloMercado(Mercado articulo) {
+        try (Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+            session.remove(session.merge(articulo)); // Uso merge explicado en quitarSobre
+            try {
+                    transaction.commit();
+                    System.out.println("TeamUp|MensajeInterno|Eliminado articulo del mercado");
+            } catch (IllegalStateException em) {
+                    transaction.rollback();
+                    System.out.println("TeamUp|Error|EM2|");
+            }
+        }
+    }
+
+    public String comprarArticulo(int idUsuario, int idArticuloMercado) {
+        String respuesta = AyudanteConteston.contestarError("nSHPCEA", "No se ha podido comprar el articulo del mercado");
+        Mercado elemento = obtenerElementoMercado(idArticuloMercado);
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+        if (elemento.getVendedor().getId() != idUsuario) {
+            if (u.getMonedas() >= elemento.getPrecio()) {
+                darCosmetico(idUsuario, elemento.getCosmetico(), 1);
+                quitarMonedas(idUsuario, elemento.getPrecio());
+                darMonedas(elemento.getVendedor().getId(), elemento.getPrecio());
+                eliminarArticuloMercado(elemento);
+                respuesta = AyudanteConteston.contestarTodoBien("sHCEA", "Se ha comprado el articulo", null);
+            }
+        }
+        
+        
+
+        return respuesta;
+    }
+
+    public String ponerArticuloVenta(int idUsuario, int idCosmetico, int precio) {
+        String respuesta = AyudanteConteston.contestarError("nSHPPEV", "No se ha podido poner en venta el articulo, porque no se puede vender");
+        Cosmetico c = obtenerCosmetico(idCosmetico);
+
+        if (c != null && c.isVendible()) {
+            Mercado m = new Mercado(obtenerUsuarioPorId(idUsuario), c, precio);
+            persistirObjeto(m);
+            quitarCosmetico(idUsuario, idCosmetico);
+            respuesta = AyudanteConteston.contestarTodoBien("aPEV", "Articulo puesto en venta en el mercado", null);
+        }
+
+        return respuesta;
+
+    }
+
+    private void quitarCosmetico(int idUsuario, int idCosmetico) {
+        Cosmetico cosmetico = obtenerCosmetico(idCosmetico);
+
+        InventarioCosmetico invCo = comprobarUsuarioTieneCosmetico(idUsuario, cosmetico);
+
+        try (Session session = sessionFactory.openSession()){
+            Transaction transaction = session.beginTransaction();
+            if (invCo != null) {
+
+                invCo.setCantidad(invCo.getCantidad() - 1);
+
+                if (invCo.getCantidad() <= 0) {
+                    session.remove(session.merge(invCo)); // Uso merge explicado en quitarSobre
+                    try {
+                        transaction.commit();
+                        System.out.println("TeamUp|MensajeInterno|Eliminado cosmetico del inventario");
+                    } catch (IllegalStateException em) {
+                        transaction.rollback();
+                        System.out.println("TeamUp|Error|EM2|");
+                    }
+                } else {
+                    actualizarObjeto(invCo);
+                }
+            }
+        }
+
+    }
+
+
+
+    private Mercado obtenerElementoMercado(int idElementoMercado) {
+        Mercado m = null;
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Mercado> q = session.createQuery("FROM Mercado WHERE id = :idElemento",Mercado.class);
+
+            q.setParameter("idElemento",idElementoMercado);
+
+            List<Mercado> lista = q.list();
+
+            if (!lista.isEmpty()) {
+                m = lista.get(0);
+            }
+        }
+
+
+        return m;
+    }
+
+    private List<SobreSimplificado> obtenerSobresUsuario (int idUsuario) {
+        List<InventarioSobre> listaSobresUsuario = new ArrayList<>();
+        List<SobreSimplificado> sobresSimplicados = new ArrayList<>();
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<InventarioSobre> q = session.createQuery("FROM InventarioSobre " +"WHERE inventario.usuario.id = :idUsuario",InventarioSobre.class);
+
+            q.setParameter("idUsuario", idUsuario);
+
+            listaSobresUsuario = q.list();
+
+            for (InventarioSobre invS : listaSobresUsuario) {
+                SobreSimplificado sS = new SobreSimplificado(invS.getSobre().getNombre(), 0, invS.getSobre().getId());
+                sS.setCantidad(invS.getCantidad());
+                sobresSimplicados.add(sS);
+            }
+    }
+
+        
+
+        return sobresSimplicados;
+    }
+
+    private List<SobreSimplificado> obtenerSobresVenta() {
+        List<Sobre> listaSobreVenta = new ArrayList<>();
+        List<SobreSimplificado> sobresSimplicados = new ArrayList<>();
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Sobre> q = session.createQuery("FROM Sobre WHERE precio > 0",Sobre.class);
+            listaSobreVenta = q.list();
+
+            for (Sobre s : listaSobreVenta) 
+                sobresSimplicados.add(new SobreSimplificado(s.getNombre(), s.getPrecio(), s.getId()));
+        
+        }
+
+        return sobresSimplicados;
+
+    }
+
+    private void quitarMonedas (int idUsuario, int cantidad) {
+        Usuario u = obtenerUsuarioPorId(idUsuario);
+        u.setMonedas(u.getMonedas() - cantidad);
+        actualizarObjeto(u);
+    }    
 
     public String recogerRecompensas(int idUsuario, int idPartido) { // recoger recompensa solo se desbloquea en la interfaz cuando el estado es completado ( el del partido)
         String respuesta = AyudanteConteston.contestarError("rEC", "Las recompensas ya han sido recogidas");
@@ -478,6 +803,9 @@ public class BaseDatosManager {
             List<Sobre> lista = q.list();
 
             sobre = lista.get(0);
+
+            sobre.getContenidos().size(); // esto para que no de el error lazy
+
         }
 
         return sobre;

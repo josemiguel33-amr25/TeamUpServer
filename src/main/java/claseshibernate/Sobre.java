@@ -1,5 +1,6 @@
 package claseshibernate;
 
+import java.util.Random;
 import java.util.Set;
 
 import jakarta.persistence.Entity;
@@ -20,6 +21,9 @@ public class Sobre {
     private String nombre; // el nombre tambien funciona como ruta para la imagen del sobre
     private String temporada;
 
+
+    private int precio = 0;
+
     @OneToMany(mappedBy="sobre")
     private Set<ContenidoSobre> contenidos;
 
@@ -37,5 +41,33 @@ public class Sobre {
 
     public String getTemporada() {
         return temporada;
+    }
+
+    public int getPrecio() {
+        return precio;
+    }
+
+    public Set<ContenidoSobre> getContenidos() {
+        return contenidos;
+    }
+
+    public ContenidoSobre obtenerContenidoAleatorio() {
+
+        Random random = new Random();
+
+        int numero = random.nextInt(100) + 1;
+
+        int acumulado = 0;
+
+        for (ContenidoSobre c : contenidos) {
+
+            acumulado += c.getProbabilidad();
+
+            if (numero <= acumulado) {
+                return c;
+            }
+        }
+
+        return null;
     }
 }

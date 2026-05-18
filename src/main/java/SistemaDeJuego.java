@@ -138,25 +138,41 @@ public class SistemaDeJuego {
                         String opcionCosmeticos = datos.get("tipoCosmeticos");
                         System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionCosmeticos);
                         switch (opcionCosmeticos) { // diferenciamos comprar sobre lo compra y lo llama a la funcion abrir de la basedatosmanager y luego en el switch la otra funcion de abrir es para abrir un sobre que tines
-                            case "comprarSobre" : // opcion cambiada antes se llamaba primera carga, aqui directamente le paso tambien los filtros y si se recarga se vuelve aqui
+                            case "comprarSobre" : // 
                                 // recibimos id del sobre que quiere el usuario abrir, hacemos la simulacion de lo que toca devolvemos lo que ha tocado simple, se comprueba si se puede comprar
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = comprarSobre(j.getIdUsuario(), datos.get("nombreSobre"));
                                 break; // en esta funcion va implicito comprar si le damos a abrir se recibe tambien el precio del sobre
                             case "verSobres": // aqui para reciclar podriamos hacer que se reciba "filtro" de misSobres o sobres de la tineda
                                 //devolvemos todos los sobres disponibles con su precio id y las cosas que lo formen como foto etc nombre esta funcion se ejecuta siempre que el usuario entra en tienda
-                                break;
-                            case "cosmeticosConseguidos": // usuario entra en esta funcion en cuanto le da a guardar en o recoger todo no se como le llamare a esta funcion, pero el usuario entra cuando ha abierto el sobre, esto es para recoger todo 
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {}); 
+                                respuesta = verSobres(j.getIdUsuario(), datos.get("tipo"));
                                 break;
                             case "mercado": // merrcado funcionamiento >> Usuario pone a la venta algo eso pasa a estar en la tabla mercado y "desaparece del inventario del usuario" el usuario en la pestaña mercado podrá ver mis articulos y cada articulo irá con la id del usuario por lo tanto si alguien compra algo, el usuario recibe las monedas automaticamente, en mis articulos el usuario podrá quitar el articulo de la venta, se paga con monedas 
+                                respuesta = obtenerElementosMercado(); 
                                 break; // aqui imitaremos lo que hicimos en partido y pondremoss filtro  de calidad
+                            case "verMisArticulosMercado":
+                                respuesta = obtenerMisElementosMercado(j.getIdUsuario());
+                                break;
                             case "comprarArticulo": // se recibe la id del articulo en mercado, y la id del usuario directamente aqui comprobamos si el usuario tiene monedas suficinetes y si tiene lo compra, desaparece del mercado y se pasa al inventario del usuario
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = comprarArticulo(j.getIdUsuario(), Integer.parseInt(datos.get("idArticuloMercado")));
                                 break;
                             case "venderArticulo": // se recibe id del usuario y id del aarticulo del inventario y el precio, se comprueba si se puede vender el articulo y si se puede lo pone en venta (se añade al mercado y se quita del inventario del usuario)
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = ponerArticuloVenta(j.getIdUsuario(), Integer.parseInt(datos.get("idCosmetico")), Integer.parseInt(datos.get("precio")));
                                 break; // importante hay que comprobar que el articulo que quiera vender no lo tenga equipado o lo cambiamos por otro articulo del invetario, porque siempre va atenerl os basicos ya que no son vendibles, esto hazlo como te parezca
                             case "quitarArticulo": // pasamos idArticulo y idUsuario supongo y lo quitariamos y lo devolveriamos al inventario del jugador
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = quitarArticuloMercado(j.getIdUsuario(), Integer.parseInt(datos.get("idArticuloMercado")));
                                 break;
                             case "abrirSobre": // pasamos id del sobre que tenemos y obviamente como siempre la id del usuario, simulamos las posibilidades y quitamos del inventario el sobre y damos la recompensas
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+                                respuesta = abrirSobre(j.getIdUsuario(), datos.get("nombreSobre")); 
                                 break;
                             case "cambiarCosmetico": // recibimos idUsuario como siempre, y el id del cosmetico, con eso podemos comprobar el tipo que es y dependiendo del tipo que sea pues lo cambiamos y ya esta
+                                datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {}); 
+                                respuesta = cambiarCosmetico(j.getIdUsuario(), Integer.parseInt(datos.get("idCosmetico")));
                                 break; // se puede recibir una tarjeta de visita, titulo o diseño carta // las funciones de cambiar cosmetico modularizalas para reutilizarlas
                         }   
                     break;
@@ -166,6 +182,42 @@ public class SistemaDeJuego {
         }
 
         return respuesta;
+    }
+
+    public String comprarArticulo(int idUsuario, int idArticuloElementoMercado) {
+        return sv.getBaseDatosManager().comprarArticulo(idUsuario, idArticuloElementoMercado);
+    }
+
+    public String ponerArticuloVenta(int idUsuario, int idCosmetico, int precio) {
+        return sv.getBaseDatosManager().ponerArticuloVenta(idUsuario, idCosmetico, precio);
+    }
+
+    public String obtenerMisElementosMercado(int idUsuario) {
+        return sv.getBaseDatosManager().obtenerElementosUsuarioMercado(idUsuario);
+    }
+
+    public String quitarArticuloMercado(int idUsuario, int idArticuloMercado) {
+        return sv.getBaseDatosManager().quitarArticuloMercado(idUsuario, idArticuloMercado);
+    }
+
+    public String obtenerElementosMercado() {
+        return sv.getBaseDatosManager().obtenerElementosMercado();
+    }
+
+    public String abrirSobre(int idUsuario, String nombreSobre) {
+        return sv.getBaseDatosManager().abrirSobre(idUsuario, nombreSobre);
+    }
+
+    public String cambiarCosmetico(int idUsuario, int idCosmetico) {
+        return sv.getBaseDatosManager().cambiarCosmetico(idUsuario, idCosmetico);
+    }
+
+    public String verSobres(int idUsuario, String tipo) {
+        return sv.getBaseDatosManager().verSobres(idUsuario, tipo);
+    }
+
+    public String comprarSobre(int idUsuario, String nombreSobre) {
+        return sv.getBaseDatosManager().comprarSobre(idUsuario, nombreSobre);
     }
 
     public String recogerRecompensa(int idUsuario, int idPartido) {
