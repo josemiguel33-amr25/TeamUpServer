@@ -244,3 +244,21 @@ Mando habiendo recogido recompensas
 
 Servidor: {"codigo":"rEC","mensaje":"Las recompensas ya han sido recogidas","status":"error"}
 
+Mando (teniendo el sobre, se presupone ya que en la interfaz no habra manera de abrir el sobre si no lo tienes)
+
+
+{"tipo":"cosmeticos","data":{"tipoCosmeticos":"abrirSobre","nombreSobre":"Sobre MVP"}}
+
+recibo
+
+Servidor: {"codigo":"sAC","datos":{"nombreCosmetico":"Expreso de Gales"},"mensaje":"Sobre abierto correctamente","status":"Perfecto"}
+
+
+Mando
+
+{"tipo":"cosmeticos","data":{"tipoCosmeticos":"cambiarCosmetico","idCosmetico":"43"}}
+
+recibo
+
+
+Servidor: {"codigo":"sHCECC","datos":{"cambiado":"titulo","nombreNuevo":"Expreso de Gales"},"mensaje":"Se ha cambiado el cosmetico correctamente","status":"Perfecto"}

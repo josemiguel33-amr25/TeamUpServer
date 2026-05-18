@@ -229,4 +229,16 @@ public class Usuario {
             return posicion2;
     }
 
+    public void setFotoPerfil(String fotoPerfil) {
+        this.fotoPerfil = fotoPerfil;
+    }
+
+    public void setTitulo(Cosmetico titulo) {
+        this.titulo = titulo;
+    }
+
+    public void setTarjetaVisita(Cosmetico tarjetaVisita) {
+        this.tarjetaVisita = tarjetaVisita;
+    }
+
 }
