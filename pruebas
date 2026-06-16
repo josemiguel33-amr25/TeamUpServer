@@ -1,7 +1,10 @@
+// Esto es el archivo de pruebas que hacia antes de tener la interfaz, donde usaba un cliente por consola, esto me ayudo para luego construir facilmente los mensajes del cliente al servidor
+
 9Miki1452SUNDAY:13Miki14202652dcgraxxqjsm selector y token para usuario Miki410
 
 contrasenia 1234@5311@M6aa
 Miki410
+
 
 
 {"tipo":"registro","data":{"nombre":"Miki410","correo":"miki14@gmail.com","contrasenia":"1234@5311@M6aa","posicion1":"dc","posicion2":"mc","recordarme":"1"}} cadena de prueba

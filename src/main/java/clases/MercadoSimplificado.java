@@ -6,18 +6,19 @@ public class MercadoSimplificado {
     private int idVendedor;
     private int precio;
     private int idArticulo; // esto es el id de la entrada del mercado NO DEL COSMETICO
-
+    private String tipoCosmetico; // añadido mas tarde, esto es necesario para en el momento de estar cargando las imagenes de los cosmeticos en el cliente, se permita diferenciar si es carta titulo etcs
 
     public MercadoSimplificado() {
 
-    } 
+    }
 
-    public MercadoSimplificado(String nombreArticulo, String nombreVendedor, int idVendedor, int precio, int idArticulo) {
+    public MercadoSimplificado(String nombreArticulo, String nombreVendedor, int idVendedor, int precio, int idArticulo, String tipoCosmetico) {
         this.nombreArticulo = nombreArticulo;
         this.nombreVendedor = nombreVendedor;
         this.idVendedor = idVendedor;
         this.precio = precio;
         this.idArticulo = idArticulo;
+        this.tipoCosmetico = tipoCosmetico;
     }
 
     public String getNombreArticulo() {
@@ -38,5 +39,9 @@ public class MercadoSimplificado {
 
     public int getIdArticulo() {
         return idArticulo;
+    }
+
+    public String getTipoCosmetico() {
+        return tipoCosmetico;
     }
 }

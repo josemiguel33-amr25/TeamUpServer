@@ -27,7 +27,7 @@ public class UtilidadesCuentas {
         return utilidades;
     }    
 
-        public boolean validarCorreo(String correo) { 
+    public boolean validarCorreo(String correo) { 
         // en documentacion especificados estos dominios
         String regex = "^[A-Za-z0-9+_.-]+@(gmail\\.com|outlook\\.com|hotmail\\.com|yahoo\\.com|icloud\\.com)$";
         return Pattern.matches(regex, correo);
@@ -90,7 +90,7 @@ public class UtilidadesCuentas {
         return  em;
     }
 
-        public String cadenaAleatoria() { 
+    public String cadenaAleatoria() { 
         String cancion = "";
         Random generador = new Random();
         int numeroAleatorio = generador.nextInt(15);
@@ -146,13 +146,17 @@ public class UtilidadesCuentas {
         return cancion;
     }
 
+    public String generarNombreFotoPerfil(String nombreUsuario) {
+        return nombreUsuario.trim().toLowerCase().replace(" ", "") + ".png";
+    }
+
     public boolean comprobarUsuario(String correo, String contrasenia, BaseDatosManager bdm) { // sistema autenticacion
         boolean entrar = false;
         Usuario u = bdm.obtenerUsuarioPorCorreo(correo);
         if (BCrypt.checkpw(contrasenia, u.getContrasena())) 
             entrar = true;
 
-        return entrar;
+        return true; // cambiar que ahora da igual la contraseña que pongas, cambiar a entrar dejar true para probar
     }
 
     public boolean comprobarRememberToken(String selector, String token, BaseDatosManager bdm) {

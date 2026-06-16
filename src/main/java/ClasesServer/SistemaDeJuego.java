@@ -18,7 +18,6 @@ import clases.AyudanteConteston;
 import clases.Rango;
 import clases.VotacionJugador;
 import sistemaAutenticacion.UsuarioManager;
-import sistemaAutenticacion.UsuarioManager;
 import sistemaCosmetico.CosmeticoManager;
 import sistemaMercado.MercadoManager;
 import sistemaPartido.PartidosManager;
@@ -46,10 +45,13 @@ public class SistemaDeJuego {
     }
 
     public String salirAplicacion(JugadorSistema j) {
-        jugadores.remove(j);
+        if (jugadores.contains(j)) 
+            jugadores.remove(j);
+        
+        
         System.out.println("TeamUp|MensajeInterno|Jugador con id " + j.getIdUsuario() + " sale de la aplicacion");
         j.cerrarConexion();
-        return AyudanteConteston.contestarTodoBien("jSdA", "Jugador ha salido de la aplicacion correctamente", null);
+        return AyudanteConteston.contestarTodoBien("jSdA", "Jugador ha salido de la aplicacion correctamente", "salirAplicacion", null);
     }
 
     public String buzon(String mensaje, JugadorSistema j) { // le llamo buzon porque se encarga de recibir mensajes y enviar a su punto Formatos disponibles en la documentacion
@@ -85,7 +87,6 @@ public class SistemaDeJuego {
                         break;
                 case "partidos": // el usuario entra en mis partidos, entra aqui en este case dentro de este case habra otro switch porque la primera vez mostramos todos los partidos del usuario pero el usuario puede pinchar en el partido y ver todos los participantes y quien gano el mvp y esas cosas
                         // aqui es cuando el usuario quiere ver el historial de partidos que ha jugado, pasamos los partidos que ha jugado facil, con toda la informacion de los partidos
-                        
                         Map<String, Object> datosPartidos = mapper.convertValue(mensajeMapita.get("data"),new TypeReference<Map<String, Object>>() {});
                         String opcionPartidos = (String) datosPartidos.get("tipoPartido");
                         System.out.println("TeamUp|MensajeInterno|Has llegado a partidos y la opcion partidos es: " + opcionPartidos);
@@ -123,7 +124,7 @@ public class SistemaDeJuego {
                                 List<VotacionJugador> votaciones = mapper.convertValue(datosPartidos.get("votaciones"),new com.fasterxml.jackson.core.type.TypeReference<List<VotacionJugador>>() {});
                                 respuesta = votarJugadores(j.getIdUsuario(), Integer.parseInt((String) datosPartidos.get("idPartido")), votaciones, equipoGanador);
                                 break; // el codigo de respuesta si ha votado correctamente inmediatmente se deshabilitara el boton de votar en ese partido
-                            case "recogerRecompensa":
+                            case "recogerRecompensas":
                                 datos = mapper.convertValue(mensajeMapita.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
                                 respuesta = recogerRecompensa(j.getIdUsuario(), Integer.parseInt(datos.get("idPartido")));
                                 break;
@@ -157,7 +158,7 @@ public class SistemaDeJuego {
                                 break;
                             case "mercado": // merrcado funcionamiento >> Usuario pone a la venta algo eso pasa a estar en la tabla mercado y "desaparece del inventario del usuario" el usuario en la pestaña mercado podrá ver mis articulos y cada articulo irá con la id del usuario por lo tanto si alguien compra algo, el usuario recibe las monedas automaticamente, en mis articulos el usuario podrá quitar el articulo de la venta, se paga con monedas 
                                 respuesta = obtenerElementosMercado(); 
-                                break; // aqui imitaremos lo que hicimos en partido y pondremoss filtro  de calidad
+                                break; 
                             case "verMisArticulosMercado":
                                 respuesta = obtenerMisElementosMercado(j.getIdUsuario());
                                 break;
@@ -183,12 +184,20 @@ public class SistemaDeJuego {
                                 break; // se puede recibir una tarjeta de visita, titulo o diseño carta // las funciones de cambiar cosmetico modularizalas para reutilizarlas
                         }   
                     break;
+                case "actualizarFotoPerfil":
+                    respuesta = actualizarFotoPerfil(j.getIdUsuario());
+                    break;
+
             } 
         } catch (Exception em) {
             System.out.println("TeamUp|Error|EM5" + em.getMessage());
         }
 
         return respuesta;
+    }
+
+    public String actualizarFotoPerfil(int idUsuario) {
+        return UsuarioManager.getUsuarioManager().actualizarFotoPerfilUsuario(idUsuario, sv.getBaseDatosManager());
     }
 
     public String comprarArticulo(int idUsuario, int idArticuloElementoMercado) {
@@ -272,7 +281,7 @@ public class SistemaDeJuego {
     public String obtenerRangos() {
         Map<String, Object> datos = new HashMap<>();
         datos.put("rangos", listaRangos);
-        String respuesta = AyudanteConteston.contestarTodoBien("Er", "Rangos enviados", datos);
+        String respuesta = AyudanteConteston.contestarTodoBien("Er", "Rangos enviados",  "rangos", datos);
         return respuesta;
     }
 
@@ -291,7 +300,7 @@ public class SistemaDeJuego {
             if (mapaDatos.get("remember").equals("si")) {
                 respuesta = UsuarioManager.getUsuarioManager().iniciarSesionToken(mapaDatos.get("selector"), mapaDatos.get("token"), j, sv.getBaseDatosManager());
             } else if (mapaDatos.get("remember").equals("no")) {
-                respuesta = UsuarioManager.getUsuarioManager().iniciarSesionContrasenia(mapaDatos.get("correo"), mapaDatos.get("contrasenia"), j, sv.getBaseDatosManager());
+                respuesta = UsuarioManager.getUsuarioManager().iniciarSesionContrasenia(mapaDatos.get("correo"), mapaDatos.get("contrasenia"), mapaDatos.get("generarToken"), j, sv.getBaseDatosManager());
             }
 
 
@@ -299,7 +308,7 @@ public class SistemaDeJuego {
                 jugadores.add(j);
             } else {
                 j.setIdUsuario(-33);
-                respuesta = AyudanteConteston.contestarError("eJyC", "El usuario esta conectado desde otro dispositivo");
+                respuesta = AyudanteConteston.contestarError("eJyC", "El usuario esta conectado desde otro dispositivo o has introducido datos incorrectos", "iniciarSesion");
             }
             
 
@@ -308,7 +317,7 @@ public class SistemaDeJuego {
     }
 
     public String registrarUsuario(Map<String,String> mapaDatos, JugadorSistema j) { 
-        String respuesta = "TeamUp|Directriz|errOe";
+        String respuesta = "";
         System.out.println("TeamUp|MensajeInterno|Ha llegado hasta aqui (registrar) con " + mapaDatos.get("nombre"));
 
         respuesta = UsuarioManager.getUsuarioManager().registrarUsuario(mapaDatos.get("nombre"), mapaDatos.get("contrasenia"), mapaDatos.get("correo"), mapaDatos.get("posicion1"), mapaDatos.get("posicion2"),mapaDatos.get("recordarme"), j, sv.getBaseDatosManager());

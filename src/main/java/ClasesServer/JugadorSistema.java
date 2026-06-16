@@ -48,10 +48,9 @@ public class JugadorSistema implements  Runnable {
                 enviarMensajeDirecto(feedback);   
             }
         } catch (IOException em) {
-            System.out.println("ERROR FATIDICO |14|");
-        } finally {
             System.out.println("TeamUp|MensajeInterno|Usuario Desconectado|UsuarioId:" + this.idUsuario);
-            cerrarConexion();
+        } finally {
+            sdj.salirAplicacion(this);  
         }
     }
 
@@ -60,7 +59,6 @@ public class JugadorSistema implements  Runnable {
             if (zocalo != null) zocalo.close();
             System.out.println("Socket de jugador cerrado");
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
