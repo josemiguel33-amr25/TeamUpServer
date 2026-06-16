@@ -28,7 +28,7 @@ public class Servidor {
 
     public void cargarPropiedades() {
         try {
-            InputStream inEm = Servidor.class.getResourceAsStream("/configuracion.properties");
+            InputStream inEm = Servidor.class.getResourceAsStream("/configuracion.properties");;
             propiedades.load(inEm);
         } catch (Exception em) {
             System.out.println("TeamUp|Error|EM0|");

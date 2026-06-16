@@ -156,7 +156,7 @@ public class UtilidadesCuentas {
         if (BCrypt.checkpw(contrasenia, u.getContrasena())) 
             entrar = true;
 
-        return true; // cambiar que ahora da igual la contraseña que pongas, cambiar a entrar dejar true para probar
+        return entrar; // cambiar que ahora da igual la contraseña que pongas, cambiar a entrar dejar true para probar
     }
 
     public boolean comprobarRememberToken(String selector, String token, BaseDatosManager bdm) {
