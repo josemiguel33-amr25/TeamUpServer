@@ -41,21 +41,42 @@ public class RankingManager {
             }
 
             List<Usuario> jugadores = q.list();
-            System.out.println("TeamUp|MensajeInterno|Lista de jugadores con: " + jugadores.size() + " jugadores y el primer jugador es:  " + jugadores.get(0).getNombre());
-            List<UsuarioSimplificado> listaUsuariosSimplificada = new ArrayList<>();
+            if (!jugadores.isEmpty()) {
+                System.out.println("TeamUp|MensajeInterno|Lista de jugadores con: " + jugadores.size() + " jugadores y el primer jugador es:  " + jugadores.get(0).getNombre());
+                List<UsuarioSimplificado> listaUsuariosSimplificada = new ArrayList<>();
 
-            for (Usuario u : jugadores) {
-                listaUsuariosSimplificada.add(new UsuarioSimplificado(u.getNombre(), rango, u.getPuntos(), u.getReputacion(), u.getGoles(), u.getAsistencias(), u.getMvps(), u.isVerificado()));
-            }
+                for (Usuario u : jugadores) {
+                    listaUsuariosSimplificada.add(new UsuarioSimplificado(u.getNombre(), rango, u.getPuntos(), u.getReputacion(), u.getGoles(), u.getAsistencias(), u.getMvps(), u.isVerificado()));
+                }
+                Map<String, Object> datos = new HashMap<>();
+                datos.put("jugadores", listaUsuariosSimplificada);
+                respuesta = AyudanteConteston.contestarTodoBien("rCc", "Ranking creado correctamente", "ranking", datos);
+            } else 
+                respuesta = AyudanteConteston.contestarError("nHJR", "No hay jugadores en el rango seleccionado", "ranking");
 
-            Map<String, Object> datos = new HashMap<>();
-            datos.put("jugadores", listaUsuariosSimplificada);
-            respuesta = AyudanteConteston.contestarTodoBien("rCc", "Ranking creado correctamente", datos);
+
 
         }
 
 
         return respuesta;
+    }
+
+    public String obtenerRangoUsuario(int rango) {
+        String rangoNombre = "";
+
+        if (rango == 1) { // a lo mejor switch mejor?
+            rangoNombre = "Bronce";
+        } else if (rango == 2) {
+            rangoNombre = "Plata";
+        } else if (rango == 3) {
+            rangoNombre = "Oro";
+        } else if (rango == 4) {
+            rangoNombre = "Elite";
+        }
+        
+
+        return rangoNombre;
     }
 
 

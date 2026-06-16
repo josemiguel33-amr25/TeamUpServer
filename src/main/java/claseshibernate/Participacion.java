@@ -36,6 +36,9 @@ public class Participacion { // todos los getters por si acaso
     @JoinColumn(name="partido_id")
     private Partido partido;
 
+    @Column(name = "ha_votado")
+    private boolean haVotado = false;
+
     public Participacion() {
         
     }
@@ -59,6 +62,14 @@ public class Participacion { // todos los getters por si acaso
 
     public boolean isMvp() {
         return mvp;
+    }
+
+    public boolean isHaVotado() {
+    return haVotado;
+}
+
+    public void setHaVotado(boolean haVotado) {
+        this.haVotado = haVotado;
     }
 
     public boolean isAsistio() {

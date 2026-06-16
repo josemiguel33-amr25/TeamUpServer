@@ -28,14 +28,18 @@ public class CosmeticoManager {
 
 
     public String comprarSobre(int idUsuario, String nombreSobre, BaseDatosManager bdm) { // Sistema cosmetico
-        String respuesta = AyudanteConteston.contestarError("eNSHCS", "No se ha podido comprar el sobre porque no tienes monedas suficientes");
+        String respuesta = AyudanteConteston.contestarError("eNSHCS", "No se ha podido comprar el sobre porque no tienes monedas suficientes", "comprarSobre");
         Sobre sobre = bdm.obtenerSobre(nombreSobre);
         Usuario u = bdm.obtenerUsuarioPorId(idUsuario);
-
+        Map<String, Object> datos = new HashMap<>();
+        
+        
         if (u.getMonedas() >= sobre.getPrecio()) {
             bdm.darSobre(idUsuario, sobre, 1);
             bdm.quitarMonedas(idUsuario, sobre.getPrecio());
-            respuesta = AyudanteConteston.contestarTodoBien("sEC", "Sobre comprado correctamente", null);
+            int monedas = u.getMonedas()-sobre.getPrecio();
+            datos.put("nuevasMonedas", String.valueOf(monedas));
+            respuesta = AyudanteConteston.contestarTodoBien("sEC", "Sobre comprado correctamente", "comprarSobre", datos);
         }
 
         return respuesta;
@@ -62,41 +66,42 @@ public class CosmeticoManager {
         }
 
 
-        return AyudanteConteston.contestarTodoBien("sHCECC", "Se ha cambiado el cosmetico correctamente", datos);
+        return AyudanteConteston.contestarTodoBien("sHCECC", "Se ha cambiado el cosmetico correctamente", "cambiarCosmetico", datos);
     }
 
     public String verSobres(int idUsuario, String tipo, BaseDatosManager bdm) { // Sistema cosmetico
-        String respuesta = AyudanteConteston.contestarError("uNTS", "El usuario no tiene sobres");
+        String respuesta = AyudanteConteston.contestarError("uNTS", "El usuario no tiene sobres", "verSobres");
         
         if (tipo.equals("usuario")) { // Sobres que tiene el usuario
             Map<String, Object> datos = new HashMap<>();
             List<SobreSimplificado> sobres = bdm.obtenerSobresUsuario(idUsuario);
             if (!sobres.isEmpty()) {
                 datos.put("sobres", sobres);
-                respuesta = AyudanteConteston.contestarTodoBien("sHPTLSU", "Todos los sobres del usuario pasados", datos);
+                respuesta = AyudanteConteston.contestarTodoBien("sHPTLSU", "Todos los sobres del usuario pasados", "verSobres", datos);
             }
         } else { // sobres de la tienda
             Map<String, Object> datos = new HashMap<>();
             List<SobreSimplificado> sobres = bdm.obtenerSobresVenta();
             datos.put("sobres", sobres);
-            respuesta = AyudanteConteston.contestarTodoBien("sHPTLST", "Todos los sobres de la tienda pasados", datos);
+            respuesta = AyudanteConteston.contestarTodoBien("sHPTLST", "Todos los sobres de la tienda pasados", "verSobresTienda", datos);
         }
 
         return respuesta;
     }
 
     public String abrirSobre(int idUsuario, String nombreSobre, BaseDatosManager bdm) { // Sistema cosmetico
-        String respuesta = AyudanteConteston.contestarError("nSHPAS", "No se ha podido abrir el sobre");
+        String respuesta = AyudanteConteston.contestarError("nSHPAS", "No se ha podido abrir el sobre", "abrirSobre");
         Sobre s = bdm.obtenerSobre(nombreSobre);
         Cosmetico cosmetico = s.obtenerContenidoAleatorio().getCosmetico();
         Map<String, Object> datos = new HashMap<>();
 
         datos.put("nombreCosmetico", cosmetico.getNombre());
+        datos.put("rareza", cosmetico.getRareza());
         
         bdm.darCosmetico(idUsuario, cosmetico, 1);
         bdm.quitarSobre(idUsuario, nombreSobre);
     
-        respuesta = AyudanteConteston.contestarTodoBien("sAC", "Sobre abierto correctamente", datos);
+        respuesta = AyudanteConteston.contestarTodoBien("sAC", "Sobre abierto correctamente", "abrirSobre", datos);
 
         return respuesta;
     }

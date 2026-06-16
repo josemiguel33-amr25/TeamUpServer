@@ -6,17 +6,19 @@ public class CosmeticoSimplificado {
     private String rareza;
     private int cantidad;
     private boolean vendible;
+    private int idCosmetico;
 
     public CosmeticoSimplificado() {
 
     }
 
-    public CosmeticoSimplificado(String tituloCosmetico, String tipo, String rareza, int cantidad, boolean vendible) {
+    public CosmeticoSimplificado(String tituloCosmetico, String tipo, String rareza, int cantidad, boolean vendible, int idCosmetico) {
         this.tituloCosmetico = tituloCosmetico;
         this.tipo = tipo;
         this.rareza = rareza;
         this.cantidad = cantidad;
         this.vendible = vendible;
+        this.idCosmetico = idCosmetico;
     }
 
     public String getTituloCosmetico() {
@@ -38,6 +40,12 @@ public class CosmeticoSimplificado {
     public boolean isVendible() {
         return vendible;
     }
+
+    public int getIdCosmetico() {
+        return idCosmetico;
+    }
+
+
 
     
 }

@@ -19,10 +19,16 @@ import claseshibernate.Reporte;
 import claseshibernate.Sobre;
 import claseshibernate.Usuario;
 import claseshibernate.Votacion;
+import utilidades.Configuracion;
 public class HibernateUtil {
     private static SessionFactory sessionFactory ;
     static {
        Configuration configuration = new Configuration().configure();
+
+        configuration.setProperty("hibernate.connection.url","jdbc:mysql://"+ Configuracion.get("db.host")+ ":"+ Configuracion.get("db.port")+ "/"+ Configuracion.get("db.name") + "?zeroDateTimeBehavior=convertToNull");
+        configuration.setProperty("hibernate.connection.username",Configuracion.get("db.user"));
+        configuration.setProperty("hibernate.connection.password",Configuracion.get("db.password"));
+        
         configuration.addAnnotatedClass(Usuario.class);
         configuration.addAnnotatedClass(Votacion.class);
         configuration.addAnnotatedClass(Mercado.class);

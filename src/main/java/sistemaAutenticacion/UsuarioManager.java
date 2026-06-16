@@ -18,6 +18,7 @@ import claseshibernate.InventarioCosmetico;
 import claseshibernate.RememberToken;
 import claseshibernate.Usuario;
 import sistemaCarta.CartaManager;
+import sistemaRanking.RankingManager;
 import utilidades.UtilidadesCuentas;
 
 public class UsuarioManager {
@@ -44,15 +45,15 @@ public class UsuarioManager {
         try (Session session = bdm.getSessionFactory().openSession()) {
         // Esto lo podriamos llevar a una funcion que deolviera un objeto que estuviera fomrado por UN boolean false / true y el mensaje, la verdad seria bueno y ayudaria al codigo pero mas adelante
             if (usuarioExiste) {
-                resultado = AyudanteConteston.contestarError("errU", "Usuario ya existe");
+                resultado = AyudanteConteston.contestarError("errU", "Usuario ya existe", "registrarUsuario");
             } else if (correoExiste){
-                resultado = AyudanteConteston.contestarError("errC", "Correo ya existe");
+                resultado = AyudanteConteston.contestarError("errC", "Correo ya existe", "registrarUsuario");
             } else if (!UtilidadesCuentas.getUtilidades().validarNombreUsuario(nombre)) {
-                resultado = AyudanteConteston.contestarError("errUu", "Nombre del usuario no cumple los requisitos");
+                resultado = AyudanteConteston.contestarError("errUu", "Nombre del usuario no cumple los requisitos", "registrarUsuario");
             } else if (!UtilidadesCuentas.getUtilidades().validarCorreo(correo)) {
-                resultado = AyudanteConteston.contestarError("errCc", "El correo no cumple el formato de correo");
+                resultado = AyudanteConteston.contestarError("errCc", "El correo no cumple el formato de correo", "registrarUsuario");
             } else if (!UtilidadesCuentas.getUtilidades().validarContrasenia(contrasenia)) {
-                resultado = AyudanteConteston.contestarError("errCo", "La contraseña no cumple los minimos de seguridad");
+                resultado = AyudanteConteston.contestarError("errCo", "La contraseña no cumple los minimos de seguridad", "registrarUsuario");
             } else {
                 String contraseniaEncriptada  = UtilidadesCuentas.getUtilidades().encriptarContrasenia(contrasenia);
                 Usuario u = new Usuario(nombre, correo, contraseniaEncriptada, posicion1, posicion2, bdm.obtenerCosmetico(2), bdm.obtenerCosmetico(3));
@@ -66,10 +67,10 @@ public class UsuarioManager {
                     List<String> lista = generarRememberToken(u, j, bdm);
                     datos.put("selector", lista.get(0));
                     datos.put("token", lista.get(1));
-                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro completo", datos);
+                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro completo", "registrarUsuario", datos);
                 } else {
                     Map<String,Object> datos = construirUsuario(u, bdm);
-                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro Completo", datos); 
+                    resultado = AyudanteConteston.contestarTodoBien("rC", "Registro Completo", "registrarUsuario", datos); 
                 }
             }
         }
@@ -85,6 +86,7 @@ public class UsuarioManager {
         datos.put("monedas", u.getMonedas()); // la moneda de la app
         datos.put("puntosRango", u.getPuntos());  // son los puntos del rango por ejemplo estas en el rango 1 con 100 puntos y al rango 2 se llega cuando tienes 300 puntos
         datos.put("posicion1", u.getPosicion1());
+        datos.put("nombreRango", RankingManager.getRankingManager().obtenerRangoUsuario(u.getRango()));
         datos.put("posicion2", u.getPosicion2());
         datos.put("correo", u.getCorreo());
         datos.put("titulo", u.getTitulo().getNombre());
@@ -145,8 +147,8 @@ public class UsuarioManager {
 
     }
 
-    public String obtenerInventarioUsuario(int idUsuario, BaseDatosManager bdm) { // sisstema cuentas
-        String respuesta = AyudanteConteston.contestarError("nSHPOBI", "Error no se ha podido obtener el inventario");
+    public String obtenerInventarioUsuario(int idUsuario, BaseDatosManager bdm) { // El inventario siempre va a tener algo porque cada vez que un usuario se registra se le dan las cosas basicas por eso no compruebo si la lista esta llena o vacia cuando ejecutamos la consulta
+        String respuesta = AyudanteConteston.contestarError("nSHPOBI", "Error no se ha podido obtener el inventario", "obtenerInventarioUsuario");
 
         try (Session session = bdm.getSessionFactory().openSession()){
             Query<InventarioCosmetico> q = session.createQuery( "FROM InventarioCosmetico WHERE inventario.usuario.id = :idUsuario", InventarioCosmetico.class);
@@ -157,33 +159,46 @@ public class UsuarioManager {
             List<CosmeticoSimplificado> cosmeticos = new ArrayList<>();
 
             for (InventarioCosmetico elemento : listaProcesar) {
-                cosmeticos.add(new CosmeticoSimplificado(elemento.getCosmetico().getNombre(),  elemento.getCosmetico().getTipo(), elemento.getCosmetico().getRareza(), elemento.getCantidad(), elemento.getCosmetico().isVendible())); //titulo, tipo, rareza, cantidad, vendible
+                cosmeticos.add(new CosmeticoSimplificado(elemento.getCosmetico().getNombre(),  elemento.getCosmetico().getTipo(), elemento.getCosmetico().getRareza(), elemento.getCantidad(), elemento.getCosmetico().isVendible(), elemento.getCosmetico().getId())); //titulo, tipo, rareza, cantidad, vendible id
             }
             Map<String, Object> datos = new HashMap<>();
 
             datos.put("cosmeticos", cosmeticos);
-            respuesta = AyudanteConteston.contestarTodoBien("iNe", "Inventario enviado", datos);
+            respuesta = AyudanteConteston.contestarTodoBien("iNe", "Inventario enviado", "obtenerInventarioUsuario", datos);
         }
 
         return respuesta;
     }
 
-        
-    //devuelve string pero pongo void para que no salga en rojo // SISTEMA cuentas
-    
-    //devuelve string pero pongo void para que no salga en rojo // SISTEMA cuentas
-    public String iniciarSesionContrasenia(String correo, String contrasenia, JugadorSistema j, BaseDatosManager bdm) { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
+    public String actualizarFotoPerfilUsuario(int idUsuario, BaseDatosManager bdm) {
+        String respuesta = AyudanteConteston.contestarTodoBien("fNSHA", "La foto se ha actualizado correctamente", "actualizarFoto", null);
+        Usuario u = bdm.obtenerUsuarioPorId(idUsuario);
+
+        u.setFotoPerfil(u.getId()+"");
+        bdm.actualizarObjeto(u);
+
+        return respuesta;
+    }
+
+
+    public String iniciarSesionContrasenia(String correo, String contrasenia, String crearToken, JugadorSistema j, BaseDatosManager bdm) { // pasarle los datos en esta funcion comprobar antes si tiene token, comprobar token y darle directamente paso o comprobar contrasenia y nombre
         // si no tiene remember token usamos la funcion que tenemos para comprobar contraseña, si tiene remember token creo que tenemos funcion para comprobar rmemeber token
         String respuesta = "";
         boolean correoExiste = bdm.comprobarCorreoAsociado(correo);
         if (!correoExiste) {
-            respuesta = AyudanteConteston.contestarError("erIncnoe", "El correo introducido no existe");
-        } else if (!UtilidadesCuentas.getUtilidades().comprobarUsuario(correo, contrasenia, bdm))
-            respuesta = AyudanteConteston.contestarError("erIncin", "La contraseña introducida es incorrecta");
-        else {
+            respuesta = AyudanteConteston.contestarError("erIncnoe", "El correo introducido no existe", "iniciarSesion");
+        } else if (!UtilidadesCuentas.getUtilidades().comprobarUsuario(correo, contrasenia, bdm)) {
+            System.out.println("TeamUp|MensajeInterno| Usuario con correo ha introducido una contraseña incorrecta ");
+            respuesta = AyudanteConteston.contestarError("erIncin", "La contraseña introducida es incorrecta", "iniciarSesion");
+        } else {
             Usuario u = bdm.obtenerUsuarioPorCorreo(correo);
             Map<String,Object> datos = construirUsuario(u, bdm);
-            respuesta = AyudanteConteston.contestarTodoBien("iC", "Inicio de sesion correcto", datos);
+            if (crearToken.equalsIgnoreCase("si")) {
+                List<String> rememberToken = generarRememberToken(u, j, bdm);
+                datos.put("selector", rememberToken.get(0));
+                datos.put("token", rememberToken.get(1));
+            }
+            respuesta = AyudanteConteston.contestarTodoBien("iC", "Inicio de sesion correcto", "iniciarSesion", datos);
             j.setIdUsuario(u.getId());
         }
         
@@ -197,11 +212,11 @@ public class UsuarioManager {
         boolean rememberTokenExiste = bdm.comprobarTokenExiste(selector);
 
         if (!rememberTokenExiste) {
-            respuesta = AyudanteConteston.contestarError("ertkNe", "El token no existe");
+            respuesta = AyudanteConteston.contestarError("ertkNe", "El token no existe", "iniciarSesion");
         } else if (UtilidadesCuentas.getUtilidades().comprobarRememberToken(selector, token, bdm)) {
             Usuario u = bdm.obtenerRememberToken(selector).getUsuario();
             Map<String,Object> datos = construirUsuario(u, bdm);
-            respuesta = AyudanteConteston.contestarTodoBien("iCcTkC", "Inicio de sesión correcto", datos);
+            respuesta = AyudanteConteston.contestarTodoBien("iCcTkC", "Inicio de sesión correcto", "iniciarSesion", datos);
             j.setIdUsuario(u.getId());
         }
 
@@ -210,7 +225,7 @@ public class UsuarioManager {
 
     public String verPerfilJugador(int idUsuario, BaseDatosManager bdm) { // sistema cuentas
         Map<String, Object> datos = construirUsuario(bdm.obtenerUsuarioPorId(idUsuario), bdm);
-        return AyudanteConteston.contestarTodoBien("iNSUC", "Informacion del usuario conseguida correctamente", datos);
+        return AyudanteConteston.contestarTodoBien("iNSUC", "Informacion del usuario conseguida correctamente", "verPerfilJugador", datos);
     }
 
 

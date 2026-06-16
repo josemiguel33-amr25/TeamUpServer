@@ -61,12 +61,12 @@ public class PartidosManager {
             bdm.getMapaConcurrencia().put(p.getId(), p);
             Participacion participacion = new Participacion(bdm.obtenerUsuarioPorId(j.getIdUsuario()), p, "equipo1"); // hay que dar de alta al mismo creador del partido el usuario creador siempre va a estar en el equipo1 porque realmente es indiferente en que equipo este el creador
             bdm.persistirObjeto(participacion);
-            respuesta = AyudanteConteston.contestarTodoBien("pCC", "El partido se ha creado correctamente", null);
+            respuesta = AyudanteConteston.contestarTodoBien("pCC", "El partido se ha creado correctamente","registrarPartido", null);
         } else
-            respuesta = AyudanteConteston.contestarError("erTlnv", "Titulo tiene mas de 100 caracteres");
+            respuesta = AyudanteConteston.contestarError("erTlnv", "Titulo tiene mas de 100 caracteres", "registrarPartido");
             
         return respuesta;        
-        }
+    }
 
         public String obtenerPartidos(String ciudad, String soloVerificados, BaseDatosManager bdm) {
             String respuesta = "";
@@ -103,7 +103,7 @@ public class PartidosManager {
 
                 Map<String, Object> datos = new HashMap<>();
                 datos.put("partidos", listaPartidos);
-                respuesta = AyudanteConteston.contestarTodoBien("pDc", "Partidos devueltos correctamente", datos);
+                respuesta = AyudanteConteston.contestarTodoBien("pDc", "Partidos devueltos correctamente", "obtenerPartidos", datos);
 
 
         }
@@ -111,7 +111,7 @@ public class PartidosManager {
     }
 
     public String abandonarPartido(int idUsuario, int idPartido, BaseDatosManager bdm) {
-        String respuesta = AyudanteConteston.contestarError("nSHPAP", "No se ha podido abanondar el partido porque quedan menos de 24 horas para que empiece");
+        String respuesta = AyudanteConteston.contestarError("nSHPAP", "No se ha podido abandonar el partido porque quedan menos de 24 horas para que empiece o porque eres el creador del partido", "abandonarPartido");
 
         synchronized (bdm.getMapaConcurrencia().get(idPartido)) {
             if (comprobarAbandonarPartido(idUsuario, idPartido, bdm)) {
@@ -130,7 +130,7 @@ public class PartidosManager {
                     try {
                         transaction.commit();
                         System.out.println("TeamUp|MensajeInterno|El usuario ya no forma parte de ese partido.");
-                        respuesta = AyudanteConteston.contestarTodoBien("uHAEPC", "El usuario ha abandonado el partido correctamente", null);
+                        respuesta = AyudanteConteston.contestarTodoBien("uHAEPC", "El usuario ha abandonado el partido correctamente", "abandonarPartido", null);
                     } catch (IllegalStateException em) {
                         transaction.rollback();
                         System.out.println("TeamUp|Error|EM2|.");
@@ -144,21 +144,24 @@ public class PartidosManager {
     }
 
     public String unirsePartido(int idUsuario, int idPartido, String equipo, BaseDatosManager bdm) {
-        String respuesta = AyudanteConteston.contestarError("nPUP", "No has podido unirte al partido porque ya estas dentro del partido o esta completo");
+        String respuesta = AyudanteConteston.contestarError("nPUP", "No has podido unirte al partido porque ya estas dentro del partido o esta completo o porque es solo para verificados", "unirsePartido");
         synchronized (bdm.getMapaConcurrencia().get(idPartido)) {
             if (comprobarUnirsePartido(idUsuario, idPartido, bdm)) {
-                try (Session session = bdm.getSessionFactory().openSession()){
-                    Participacion p = new Participacion(bdm.obtenerUsuarioPorId(idUsuario), bdm.obtenerPartidoPorId(idPartido), equipo);
-                    bdm.persistirObjeto(p);
-                    respuesta = AyudanteConteston.contestarTodoBien("jSHUC", "Jugador se ha unido correctamente", null);
-                    if (bdm.obtenerParticipantes(idPartido).size() == JUGADORES_MAXIMOS) {
-                        System.out.println("TeamUp|MensajeInterno| El partido ha llegado a 14 jugadores por lo tanto pasa a estado lleno :)");
-                        Partido partido = bdm.obtenerPartidoPorId(idPartido);
-                        partido.setEstado("lleno");
-                        bdm.actualizarObjeto(partido);
-                    }
+                if (bdm.obtenerJugadoresDeUnEquipo(equipo, idPartido).size() < 7) {
+                    try (Session session = bdm.getSessionFactory().openSession()){
+                        Participacion p = new Participacion(bdm.obtenerUsuarioPorId(idUsuario), bdm.obtenerPartidoPorId(idPartido), equipo);
+                        bdm.persistirObjeto(p);
+                        respuesta = AyudanteConteston.contestarTodoBien("jSHUC", "Jugador se ha unido correctamente", "unirsePartido", null);
+                        if (bdm.obtenerParticipantes(idPartido).size() == JUGADORES_MAXIMOS) {
+                            System.out.println("TeamUp|MensajeInterno| El partido ha llegado a 14 jugadores por lo tanto pasa a estado lleno :)");
+                            Partido partido = bdm.obtenerPartidoPorId(idPartido);
+                            partido.setEstado("lleno");
+                            bdm.actualizarObjeto(partido);
+                        }
 
-                }
+                    }
+                } else
+                    respuesta = AyudanteConteston.contestarError("nPUP", "No has podido unirte al partido porque el equipo que has elegido esta lleno", "unirsePartido"); 
             }
         }
         
@@ -208,14 +211,14 @@ public class PartidosManager {
             datos.put("estadoPartido", partido.getEstado());
             datos.put("idPartido", partido.getId());
             datos.put("creadorPartido", partido.getCreador().getId());
-            respuesta = AyudanteConteston.contestarTodoBien("dDPD", "Se han devuelto correctamente los datos del partido", datos);
+            respuesta = AyudanteConteston.contestarTodoBien("dDPD", "Se han devuelto correctamente los datos del partido", "verMasInfoPartido", datos);
         }
 
         return respuesta;
     }
 
     public String obtenerPartidosUsuario(int idUsuario,  String estado, BaseDatosManager bdm) {
-        String respuesta = AyudanteConteston.contestarError("eDPDU", "El usuario no participa en ningun partido con ese estado");
+        String respuesta = AyudanteConteston.contestarError("eDPDU", "El usuario no participa en ningun partido con ese estado", "obtenerPartidosUsuario");
         List<Participacion> partidosUsuario = bdm.obtenerParticipacionesUsuario(idUsuario);
         List<PartidoSimplificado> listaPartidos = new ArrayList<>();
         if (!partidosUsuario.isEmpty()) {
@@ -235,67 +238,74 @@ public class PartidosManager {
             if (!listaPartidos.isEmpty()) {
                 Map<String, Object> datos = new HashMap<>();
                 datos.put("partidos", listaPartidos);
-                respuesta = AyudanteConteston.contestarTodoBien("pDUC", "Partidos devueltos correctamente", datos);
+                respuesta = AyudanteConteston.contestarTodoBien("pDUC", "Partidos devueltos correctamente","obtenerPartidosUsuario", datos);
             }
         }
         return respuesta;
     }
 
     public String partidoFinalizado(int idUsuario, int idPartido, BaseDatosManager bdm) {
-        String respuesta = AyudanteConteston.contestarError("nSHPTP", "No se ha podido terminar el partido porque no ha empezado o no eres el creador");
+        String respuesta = AyudanteConteston.contestarError("nSHPTP", "No se ha podido terminar el partido porque no ha empezado o no eres el creador", "partidoFinalizado");
         Partido partido = bdm.obtenerPartidoPorId(idPartido);
         if (LocalDateTime.now().isAfter(partido.getFecha()) && partido.getCreador().getId() == idUsuario) { // cambiado solo con el ! para comprobar, quita EL !
             partido.setEstado("terminado");
             bdm.actualizarObjeto(partido);
-            respuesta = AyudanteConteston.contestarTodoBien("pTC", "Partido terminado correctamente", null);
+            respuesta = AyudanteConteston.contestarTodoBien("pTC", "Partido terminado correctamente", "partidoFinalizado", null);
         }
         return respuesta;
     }
 
 
     public String votarJugadores(int idUsuario, int idPartido, List<VotacionJugador> votaciones, String equipoGanador, BaseDatosManager bdm) {
-        String respuesta = AyudanteConteston.contestarError("nSHPVC", "No se ha podido votar correctamente");
+        String respuesta = AyudanteConteston.contestarError("nSHPVC", "No se ha podido votar correctamente", "votarJugadores");
         Partido partidoObjeto = bdm.obtenerPartidoPorId(idPartido);
-        synchronized (bdm.getMapaConcurrencia().get(idPartido)) { // Aqui empieza la mgia de la concurrencia
-            for (VotacionJugador vJ : votaciones) {
-                Participacion participacion = bdm.obtenerParticipacionId(vJ.getIdUsuario(), idPartido);
-                Votacion v = new Votacion(bdm.obtenerPartidoPorId(idPartido), bdm.obtenerUsuarioPorId(idUsuario), bdm.obtenerUsuarioPorId(vJ.getIdUsuario()), vJ.getPuntuacion(), vJ.getGoles(), vJ.getAsistencias(), vJ.isMvp()); 
-                bdm.persistirObjeto(v);
-                if (partidoObjeto.getCreador().getId() == idUsuario) { // aqui solo entra una vez porque el creador solo puede votar a un mvp
-                    if (v.isMvp()) {
-                        partidoObjeto.setMvp(v.getVotado());
-                        bdm.actualizarObjeto(partidoObjeto);
+        synchronized (bdm.getMapaConcurrencia().get(idPartido)) { // Aqui empieza la magia de la concurrencia
+            if (!bdm.obtenerParticipacionId(idUsuario, idPartido).isHaVotado()) {
+                for (VotacionJugador vJ : votaciones) {
+                    Participacion participacion = bdm.obtenerParticipacionId(vJ.getIdUsuario(), idPartido);
+                    Votacion v = new Votacion(bdm.obtenerPartidoPorId(idPartido), bdm.obtenerUsuarioPorId(idUsuario), bdm.obtenerUsuarioPorId(vJ.getIdUsuario()), vJ.getPuntuacion(), vJ.getGoles(), vJ.getAsistencias(), vJ.isMvp()); 
+                    bdm.persistirObjeto(v);
+                    if (partidoObjeto.getCreador().getId() == idUsuario) { // aqui solo entra una vez porque el creador solo puede votar a un mvp
+                        if (v.isMvp()) {
+                            partidoObjeto.setMvp(v.getVotado());
+                            bdm.actualizarObjeto(partidoObjeto);
+                            Usuario u = bdm.obtenerUsuarioPorId(vJ.getIdUsuario());
+                            u.setMvps(u.getMvps()  + 1);
+                            participacion.setMvp(true);
+                            bdm.actualizarObjeto(u);
+                        }
+                        participacion.setGoles(v.getGoles());
+                        participacion.setAsistencias(v.getAsistencias());
                         Usuario u = bdm.obtenerUsuarioPorId(vJ.getIdUsuario());
-                        u.setMvps(u.getMvps()  + 1);
-                        participacion.setMvp(true);
+                        u.setGoles(u.getGoles() + v.getGoles());
+                        u.setAsistencias(u.getAsistencias() + v.getAsistencias());
                         bdm.actualizarObjeto(u);
+                        bdm.actualizarObjeto(participacion);
+                        
                     }
-                    participacion.setGoles(v.getGoles());
-                    participacion.setAsistencias(v.getAsistencias());
-                    Usuario u = bdm.obtenerUsuarioPorId(vJ.getIdUsuario());
-                    u.setGoles(u.getGoles() + v.getGoles());
-                    u.setAsistencias(u.getAsistencias() + v.getAsistencias());
-                    bdm.actualizarObjeto(u);
-                    bdm.actualizarObjeto(participacion);
-                    
                 }
-            }
-            
-            if (!equipoGanador.equals("-33")) {
-                partidoObjeto.setEquipoGanador(equipoGanador);
-                bdm.actualizarObjeto(partidoObjeto);
-            }
+                
+                if (!equipoGanador.equals("-33")) {
+                    partidoObjeto.setEquipoGanador(equipoGanador);
+                    bdm.actualizarObjeto(partidoObjeto);
+                }
 
-            respuesta = AyudanteConteston.contestarTodoBien("sHPVC", "Se ha podido votar correctamente", null);
+                Participacion pUsuario = bdm.obtenerParticipacionId(idUsuario, idPartido);
+                pUsuario.setHaVotado(true);
+                bdm.actualizarObjeto(pUsuario);
+                
+                respuesta = AyudanteConteston.contestarTodoBien("sHPVC", "Se ha podido votar correctamente", "votarJugadores", null);
 
-            if (bdm.obtenerVotacionesPartido(idPartido).size() == 183) { // 183 porque en total x partido se esperan 183 votos, el creador vota a si mismo porque tendria que poner sus goles y asistencias o si es el mvp, pero no se podra votar su puntuacion
-                Partido p = bdm.obtenerPartidoPorId(idPartido); // no uso constante en este dato porque no puede ser otro numero que no sea este ya que la aplicacion gira en torno a partidos de futbol 7 por lo tanto si cambiaramos futbol 7 tendriamos que cambiar toda la aplicacion por lo tanto no tendria sentido
-                bdm.actualizarMediaEquipos(idPartido);
-                p.setEstado("completado");
-                bdm.actualizarObjeto(p);
-                bdm.getMapaConcurrencia().remove(idPartido);
-                bdm.limpiadorVotos(idPartido);
-            }
+                if (bdm.obtenerVotacionesPartido(idPartido).size() == 183) { // 183 porque en total x partido se esperan 183 votos, el creador vota a si mismo porque tendria que poner sus goles y asistencias o si es el mvp, pero no se podra votar su puntuacion
+                    Partido p = bdm.obtenerPartidoPorId(idPartido); // no uso constante en este dato porque no puede ser otro numero que no sea este ya que la aplicacion gira en torno a partidos de futbol 7 por lo tanto si cambiaramos futbol 7 tendriamos que cambiar toda la aplicacion por lo tanto no tendria sentido
+                    bdm.actualizarMediaEquipos(idPartido);
+                    p.setEstado("completado");
+                    bdm.actualizarObjeto(p);
+                    bdm.getMapaConcurrencia().remove(idPartido);
+                    bdm.limpiadorVotos(idPartido);
+                }
+            } else 
+                respuesta = AyudanteConteston.contestarError("nSHPV", "Ya has votado en este partido antes", "votarJugadores");
         }
 
         return respuesta;
@@ -319,11 +329,12 @@ public class PartidosManager {
             sePuedeUnir = false;
 
 
+
         return sePuedeUnir;
     }
 
     public String recogerRecompensas(int idUsuario, int idPartido, BaseDatosManager bdm) { // recoger recompensa solo se desbloquea en la interfaz cuando el estado es completado ( el del partido)
-        String respuesta = AyudanteConteston.contestarError("rEC", "Las recompensas ya han sido recogidas");
+        String respuesta = AyudanteConteston.contestarError("rEC", "Las recompensas ya han sido recogidas", "recogerRecompensas");
         Partido p = bdm.obtenerPartidoPorId(idPartido);
         Participacion participacion = bdm.obtenerParticipacionId(idUsuario, idPartido);
         Carta c = bdm.obtenerCartaUsuario(idUsuario);
@@ -391,7 +402,7 @@ public class PartidosManager {
             participacion.setRecompensasRecogidas(true);
             bdm.actualizarObjeto(c);
             bdm.actualizarObjeto(participacion);
-            respuesta = AyudanteConteston.contestarTodoBien("rEC", "Recompensas entregadas correctamentes", null); // alomejor devolver en fomrato json todo lo que ha consegudio el usuario y enseñarlo en una pantalla
+            respuesta = AyudanteConteston.contestarTodoBien("rEC", "Recompensas entregadas correctamentes", "recogerRecompensas", null); // alomejor devolver en fomrato json todo lo que ha consegudio el usuario y enseñarlo en una pantalla
         }
         return respuesta;
     }

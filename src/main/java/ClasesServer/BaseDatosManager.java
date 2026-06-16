@@ -11,6 +11,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 
+import clases.CosmeticoSimplificado;
 import clases.SobreSimplificado;
 import claseshibernate.Carta;
 import claseshibernate.Cosmetico;
@@ -343,6 +344,27 @@ public class BaseDatosManager {
         
     }
 
+    public List<CosmeticoSimplificado> obtenerCosmeticosServidor() {
+        List<CosmeticoSimplificado> cosmeticosSimpli = new ArrayList<>();
+
+        try (Session session = sessionFactory.openSession()) {
+            Query<Cosmetico> q = session.createQuery("FROM Cosmetico ",Cosmetico.class);
+            List<Cosmetico> lista = q.list();
+
+            if (!lista.isEmpty()) {
+                for (Cosmetico cosmetico : lista) 
+                    cosmeticosSimpli.add(new CosmeticoSimplificado(cosmetico.getNombre(), cosmetico.getTipo(), cosmetico.getRareza(), 0, false , cosmetico.getId()));
+                
+            }
+        }
+
+
+
+        return cosmeticosSimpli;
+    }
+
+    
+
     public void darCosmetico(int idusuario, Cosmetico cosmetico, int cantidad ) {
         System.out.println("TeamUp|MensajeInterno| Entro en dar cosmetico al usuario " + idusuario);
         InventarioCosmetico invCo = comprobarUsuarioTieneCosmetico(idusuario, cosmetico);
@@ -359,8 +381,6 @@ public class BaseDatosManager {
         InventarioCosmetico invCo = null;
 
         try (Session session = sessionFactory.openSession()) {
-
-
             Query<InventarioCosmetico> q = session.createQuery("FROM InventarioCosmetico " +"WHERE inventario.usuario.id = :idUsuario " +"AND cosmetico.id = :idCosmetico",InventarioCosmetico.class);
 
             q.setParameter("idUsuario", idUsuario);
@@ -805,6 +825,22 @@ public class BaseDatosManager {
         }
 
         return u;
+    }
+
+    public List<Participacion> obtenerJugadoresDeUnEquipo(String equipo, int idPartido) {
+        List<Participacion> jugadoresEquipo = new ArrayList<>();
+
+        try (Session session = sessionFactory.openSession()) {
+
+            Query<Participacion> q = session.createQuery("FROM Participacion " +"WHERE partido.id = :idPartido " +"AND equipo = :equipo",Participacion.class);
+
+            q.setParameter("idPartido", idPartido);
+            q.setParameter("equipo", equipo);
+
+            jugadoresEquipo = q.list();
+    }
+
+        return jugadoresEquipo;
     }
 
     public Usuario obtenerUsuarioPorCorreo(String correo) {
